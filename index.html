@@ -39,6 +39,7 @@
     <p class="settings-note plan-empty" data-plan-empty hidden>Fill in the Event page to see your plan. <button type="button" class="text-button text-button--accent" data-go-event>Go to Event</button></p>
 
     <h2 class="settings-heading">During</h2>
+    <p class="settings-note plan-swim-note" data-swim-plan-note hidden>You can't eat or drink mid-swim, so fuelling moves to before and after, or to feed stations on long open-water swims.</p>
     <div class="field-group">
       <div class="field-row">
         <div class="field computed-field computed-field--hero"><span id="carbsHourLabel">Carbs per hour</span><output data-result="carbsPerHour" aria-labelledby="carbsHourLabel">– g/h</output></div>
@@ -46,6 +47,12 @@
       </div>
     </div>
     <p class="settings-note" data-gut-note>Never more than your gut is trained for.</p>
+
+    <!-- Triathlon: each leg's time window and its part in the plan (LEG_ROLES in main.js) -->
+    <div data-leg-plan-wrap hidden>
+      <h3 class="settings-subheading">By leg</h3>
+      <div class="field-group" data-leg-plan="nutrition"></div>
+    </div>
 
     <h3 class="settings-subheading">Timeline</h3>
     <div class="field-group">
@@ -97,6 +104,7 @@
     <p class="settings-note plan-empty" data-plan-empty hidden>Fill in the Event page to see your plan. <button type="button" class="text-button text-button--accent" data-go-event>Go to Event</button></p>
 
     <h2 class="settings-heading">During</h2>
+    <p class="settings-note plan-swim-note" data-swim-plan-note hidden>You can't eat or drink mid-swim, so fuelling moves to before and after, or to feed stations on long open-water swims.</p>
     <h3 class="settings-subheading">Fluid</h3>
     <div class="field-group">
       <div class="field-row">
@@ -106,6 +114,12 @@
       <div class="field computed-field"><span id="bottlesLabel">Bottles</span><output data-result="bottles" aria-labelledby="bottlesLabel">–</output><span class="computed-field__detail" data-bottle-kit></span></div>
     </div>
     <p class="settings-note">Capped at a safe maximum. In sessions under an hour, drink to thirst.</p>
+
+    <!-- Triathlon: each leg's time window and its part in the plan (LEG_ROLES in main.js) -->
+    <div data-leg-plan-wrap hidden>
+      <h3 class="settings-subheading">By leg</h3>
+      <div class="field-group" data-leg-plan="hydration"></div>
+    </div>
 
     <h3 class="settings-subheading">Electrolytes</h3>
     <div class="field-group">
@@ -280,14 +294,28 @@
     <p class="settings-note" data-intervals="yes">Worked out from your intervals above.</p>
 
     <h2 class="settings-heading">Conditions</h2>
+    <!-- For swimming these read Pool / Open water (data-swim-label) -->
     <div class="segmented" role="group" aria-label="Indoor or outdoor">
-      <button type="button" data-workout-choice="environment" data-value="indoor">Indoor</button>
-      <button type="button" data-workout-choice="environment" data-value="outdoor">Outdoor</button>
+      <button type="button" data-workout-choice="environment" data-value="indoor" data-swim-label="Pool">Indoor</button>
+      <button type="button" data-workout-choice="environment" data-value="outdoor" data-swim-label="Open water">Outdoor</button>
     </div>
+    <!-- Blank boxes are "not set", treated as mild (see eventConditions in main.js), so
+         the placeholders are examples rather than a 0 that looks like a value -->
     <div class="field-group spaced">
-      <div class="field-row">
-        <label class="field"><span>Temperature</span><span class="unit-field"><input data-workout-key="temperature" data-format="number" data-decimals="0" data-signed type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">°C</span></span></label>
-        <label class="field"><span>Humidity</span><span class="unit-field"><input data-workout-key="humidity" data-format="number" data-decimals="0" data-max="100" type="text" inputmode="numeric" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">%</span></span></label>
+      <div class="field-row" data-types="run bike triathlon other">
+        <label class="field"><span>Air temperature</span><span class="unit-field"><input data-workout-key="temperature" data-format="number" data-decimals="0" data-signed type="text" inputmode="decimal" placeholder="e.g. 18" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">°C</span></span></label>
+        <label class="field"><span>Humidity</span><span class="unit-field"><input data-workout-key="humidity" data-format="number" data-decimals="0" data-max="100" type="text" inputmode="numeric" placeholder="e.g. 50" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">%</span></span></label>
+      </div>
+      <!-- Swimming: water temperature and wetsuit matter, not the air -->
+      <div class="field-row" data-types="swim triathlon">
+        <label class="field"><span>Water temperature</span><span class="unit-field"><input data-workout-key="waterTemperature" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="e.g. 17" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">°C</span></span></label>
+        <label class="field" data-env="outdoor"><span>Wetsuit</span>
+          <select data-workout-key="wetsuit">
+            <option value="">Select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </label>
       </div>
       <div class="field-row" data-env="outdoor">
         <label class="field" data-types="run bike"><span>Elevation<span class="sr-only">, total climb in metres</span></span><span class="unit-field"><input data-workout-key="elevation" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">m</span></span></label>
@@ -295,7 +323,8 @@
         <label class="field" data-types="triathlon"><span>Run elevation<span class="sr-only">, total climb in metres</span></span><span class="unit-field"><input data-workout-key="runElevation" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">m</span></span></label>
       </div>
     </div>
-    <p class="settings-note">Heat and humidity are among the biggest drivers of how much you sweat.</p>
+    <p class="settings-note" data-types="run bike triathlon other">Heat and humidity are among the biggest drivers of how much you sweat. Indoors, on a turbo or treadmill, you sweat more, with little airflow to cool you. Leave a box blank if you're not sure: it's treated as mild, about 18 °C.</p>
+    <p class="settings-note" data-types="swim">In the water, the water temperature and wetsuit matter, not the air. You can't drink mid-swim, so fuelling moves to before and after, or to feed stations on long open-water swims.</p>
 
     <div data-event="race">
       <h2 class="settings-heading">Aid stations</h2>
@@ -330,8 +359,8 @@
                 <label class="check-item"><input type="checkbox" data-aid-item="water"><span>Water</span></label>
                 <label class="check-item"><input type="checkbox" data-aid-item="drink"><span>Course drink</span></label>
                 <label class="check-item"><input type="checkbox" data-aid-item="gel"><span>Course gel</span></label>
-                <label class="check-item"><input type="checkbox" data-aid-item="cola"><span>Cola</span></label>
-                <label class="check-item"><input type="checkbox" data-aid-item="food"><span>Fruit or other food</span></label>
+                <label class="check-item"><input type="checkbox" data-aid-item="cola"><span>Cola <span class="check-item__hint">about 10 g carbs per 100 ml</span></span></label>
+                <label class="check-item"><input type="checkbox" data-aid-item="food"><span>Fruit or other food <span class="check-item__hint">about 12 g carbs a piece, e.g. half a banana</span></span></label>
               </fieldset>
             </div>
             <div class="product__footer">
@@ -420,7 +449,7 @@
         <label class="field"><span>Measured sweat rate (optional)</span><span class="unit-field"><input data-key="sweatRate" data-convert="rate" data-format="number" type="text" inputmode="decimal" placeholder="Use the test below" autocomplete="off"><span class="unit-field__unit" data-unit-label="rate"></span></span></label>
         <!-- The conditions the rate was measured in, shown once there's a rate -->
         <div class="field-row" id="rateConditions" hidden>
-          <label class="field"><span>Measured at</span><span class="unit-field"><input data-key="sweatRateTemp" data-format="number" data-decimals="0" data-signed type="text" inputmode="decimal" placeholder="18" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">°C</span></span></label>
+          <label class="field"><span>Measured at</span><span class="unit-field"><input data-key="sweatRateTemp" data-format="number" data-decimals="0" data-signed type="text" inputmode="decimal" placeholder="e.g. 18" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">°C</span></span></label>
           <label class="field"><span>Sport</span>
             <select data-key="sweatRateSport">
               <option value="">Select</option>
@@ -455,7 +484,7 @@
           <div class="field-group">
             <!-- Conditions of the test, copied to the measured rate with it -->
             <div class="field-row">
-              <label class="field"><span>Temperature</span><span class="unit-field"><input data-key="testTemp" data-format="number" data-decimals="0" data-signed type="text" inputmode="decimal" placeholder="18" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">°C</span></span></label>
+              <label class="field"><span>Temperature</span><span class="unit-field"><input data-key="testTemp" data-format="number" data-decimals="0" data-signed type="text" inputmode="decimal" placeholder="e.g. 18" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">°C</span></span></label>
               <label class="field"><span>Sport</span>
                 <select data-key="testSport">
                   <option value="">Select</option>

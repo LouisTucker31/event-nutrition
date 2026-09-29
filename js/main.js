@@ -634,6 +634,11 @@ function applyWorkoutVisibility() {
   });
   workoutView.querySelectorAll("[data-workout-choice]").forEach(button =>
     button.setAttribute("aria-pressed", String(w[button.dataset.workoutChoice] === button.dataset.value)));
+  // Indoor / Outdoor reads Pool / Open water for swimming
+  workoutView.querySelectorAll("[data-swim-label]").forEach(button => {
+    button.dataset.label ??= button.textContent;
+    button.textContent = w.type === "swim" ? button.dataset.swimLabel : button.dataset.label;
+  });
   const text = MODE_TEXT[settings.workoutMode];
   document.querySelectorAll("[data-workout-mode]").forEach(button =>
     button.setAttribute("aria-pressed", String(button.dataset.workoutMode === settings.workoutMode)));
@@ -700,6 +705,45 @@ function workoutLegs(w) {
 }
 const workoutSeconds = () => workoutLegs(workout()).reduce((total, [, seconds]) => total + seconds, 0);
 
+// Triathlon legs with their time windows from the start, for the plan: e.g.
+// { leg: "bike", name: "Bike", start: 2000, end: 7400 }. Transitions count in
+// the timing but have no part of their own in the plan.
+function legWindows(w = workout()) {
+  if (w.type !== "triathlon" || usesIntervals(w)) return [];
+  let clock = 0;
+  return workoutLegs(w).map(([name, seconds]) => {
+    const window = { leg: name.toLowerCase(), name, start: clock, end: clock + seconds };
+    clock += seconds;
+    return window;
+  }).filter(window => !["t1", "t2"].includes(window.leg));
+}
+// What each triathlon leg is for: nothing on the swim, most carbs and fluid on
+// the bike (it's easier to eat there), gels and sips on the run
+const LEG_ROLES = {
+  swim: { nutrition: "Nothing: you can't eat while swimming", hydration: "Nothing: you can't drink while swimming" },
+  bike: { nutrition: "Most of your carbs: it's easier to eat on the bike", hydration: "Most of your fluid and sodium" },
+  run: { nutrition: "Gels", hydration: "Sips at aid stations" }
+};
+
+// The conditions for the plan. Blank boxes are "not set" and treated as mild,
+// never as 0 °C or 0%. Indoors (a turbo or treadmill) raises the sweat
+// estimate: there's little airflow to cool you. Swimming uses the water
+// temperature and wetsuit instead of the air.
+const MILD_CONDITIONS = { temperature: 18, humidity: 50 };
+function eventConditions(w = workout()) {
+  const inWater = ["swim", "triathlon"].includes(w.type);
+  const outdoor = w.environment !== "indoor";
+  return {
+    indoor: !outdoor,
+    air: w.type === "swim" ? null : {
+      temperature: w.temperature ?? MILD_CONDITIONS.temperature,
+      humidity: w.humidity ?? MILD_CONDITIONS.humidity,
+      isSet: w.temperature != null
+    },
+    water: inWater ? { temperature: w.waterTemperature ?? null, wetsuit: outdoor && w.wetsuit === "yes" } : null
+  };
+}
+
 const totalTime = document.getElementById("totalTime");
 const totalTimeDetail = document.getElementById("totalTimeDetail");
 function updateWorkoutMaths() {
@@ -738,6 +782,9 @@ settingsDialog.addEventListener("close", fillCourseSelects); // products may hav
 const aidList = document.getElementById("aidList");
 const aidTemplate = document.getElementById("aidTemplate");
 const AID_ITEMS = { water: "Water", drink: "Course drink", gel: "Course gel", cola: "Cola", food: "Food" };
+// Rough carbs for what the course hands out that isn't one of your products
+// (the course drink and gel come from My products)
+const AID_ITEM_CARBS = { cola: { gramsPer100ml: 10 }, food: { gramsEach: 12 } }; // food: e.g. half a banana
 let openAidId = null;
 function aidSummary(station) {
   const parts = [];
@@ -861,7 +908,9 @@ function workoutFromRaceReady({ type, event }) {
   const has = leg => tri || type === leg;
   const w = { ...blankWorkout("race"), type, setBy: "distance",
     name: event.raceName || undefined, date: event.raceDate || undefined, start: event.raceStart || undefined,
-    environment: type === "swim" && event.swimType === "Pool" ? "indoor" : "outdoor" };
+    environment: type === "swim" && event.swimType === "Pool" ? "indoor" : "outdoor",
+    // Race Ready's wetsuit rule: compulsory means one, not allowed means none
+    wetsuit: { Compulsory: "yes", "Not allowed": "no" }[event.wetsuitRule] };
   // Paces and speed from the goal times, when there are some
   if (has("swim")) {
     w.swimDistance = number("swimDistance");
@@ -938,6 +987,25 @@ function renderPlans() {
     line.append(title, ` · ${rest.join(" · ")}`);
   });
   document.querySelectorAll("[data-plan-empty]").forEach(note => { note.hidden = hasEvent; });
+  document.querySelectorAll("[data-swim-plan-note]").forEach(note => { note.hidden = w.type !== "swim"; });
+
+  // Triathlon: each leg's window and its part in the plan
+  const windows = legWindows(w);
+  document.querySelectorAll("[data-leg-plan]").forEach(group => {
+    const page = group.dataset.legPlan;
+    group.textContent = "";
+    group.parentElement.hidden = windows.length === 0;
+    windows.forEach(({ leg, name, start, end }) => {
+      const row = document.createElement("div");
+      row.className = "field computed-field";
+      const label = document.createElement("span");
+      label.textContent = `${name} · ${formatHMS(start)}–${formatHMS(end)}`;
+      const role = document.createElement("output");
+      role.textContent = LEG_ROLES[leg][page];
+      row.append(label, role);
+      group.append(row);
+    });
+  });
 
   const cap = gutCarbCap();
   document.querySelector("[data-gut-note]").textContent = cap

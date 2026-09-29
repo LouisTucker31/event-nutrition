@@ -64,6 +64,9 @@ assets/icons/
   - *Hydration:* fluid per hour and in total, bottles, sodium per hour and in
     total, what to mix, servings of your drinks and tabs; pre-loading before,
     and how much to drink after.
+  - Triathlons show each leg's time window and its part in the plan: nothing on
+    the swim, most carbs and fluid on the bike, gels and sips on the run
+    (`legWindows()`, `LEG_ROLES`). Swims note that fuelling moves to before and after.
   - Already live: the event line, the gut limit, the saltiness band and the
     product names, and a "not medical advice" note on both.
 - **Event page** (third tab, with Race Ready's calendar icon), laid out like Race Ready's Events page:
@@ -82,9 +85,16 @@ assets/icons/
     and a time-weighted overall intensity.
   - *Duration:* a time (one per leg for triathlon), or distance plus pace or
     speed, with the total worked out. Timer-style boxes as in Race Ready.
-  - *Conditions:* indoor or outdoor, temperature, humidity and elevation.
+  - *Conditions:* indoor or outdoor (Pool or Open water for swimming), air
+    temperature, humidity and elevation. Swimming uses water temperature and
+    wetsuit instead of the air; triathlon has both. Blank boxes are "not set"
+    and treated as mild (18 °C, 50%), never 0. `eventConditions()` gives the
+    plan these, with an indoor flag (indoors raises the sweat estimate: little
+    airflow).
   - *Aid stations* (races only): the course drink and gel, picked from My
     products, and a fold-out card per station (leg, km, what it hands out).
+    Cola counts as about 10 g carbs per 100 ml and food about 12 g a piece
+    (`AID_ITEM_CARBS`).
   - *Start a new workout* (training) or *Clear this race* clears just that one,
     keeping the other, settings and products.
 - **Units:** numbers are stored metric (kg, cm, ml, L/h) and converted for
