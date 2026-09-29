@@ -40,12 +40,19 @@ assets/icons/
     average, 4–6 high; worked out as 500, 950 and 1,500 mg/L), or a lab
     sweat-sodium result in mg/L, which overrides them.
   - *Gut training:* the most carbs per hour you're used to, which will cap the
-    carb target.
+    carb target. Left empty, the plan follows the standard guidance with no cap
+    (`gutCarbCap()` returns null), and the Nutrition page says so.
   - *My products:* gels, drink mixes, electrolyte tabs, chews and bars, each
-    with carbs and sodium per serving (and the water it's mixed with, for
-    drinks and tabs).
-  - *Units* (kg, cm or lb, ft in; ml or US fl oz), *Appearance* (light, dark or
-    system) and *Clear my details*, which keeps units and appearance.
+    with carbs, sodium and caffeine per serving (and the water it's mixed
+    with, for drinks and tabs).
+  - *Bottles:* bottle size and how many you carry (e.g. 2 × 750 ml), for the
+    number of bottles and refill timings.
+  - *Units* (kg, cm or lb, ft in; ml or US fl oz) and *Appearance* (light,
+    dark or system).
+  - *Reset:* *Clear my details* clears your details, sweat profile and gut
+    training, keeping products, bottles, units and appearance (products and
+    bottles are kit you keep between races). *Remove all products* clears the
+    products on their own.
 - **Nutrition and Hydration pages** (first two tabs): display only, for
   whichever workout is selected on the Event page (training or race), with its
   name, type, time and date under the title. The layout is in place; worked-out
@@ -100,7 +107,7 @@ to drop their old cache straight away (they update on next launch either way).
 
 ## Data and privacy
 
-Everything you enter (your details, sweat profile, gut training, products,
+Everything you enter (your details, sweat profile, gut training, products, bottles,
 the workout, units and theme) and the last page used stay in this browser's
 localStorage on this device. Nothing is sent to a server. Import from Race
 Ready reads Race Ready's saved event from the same storage and never changes it. "Clear my details" in settings

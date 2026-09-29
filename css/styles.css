@@ -107,6 +107,7 @@ input, textarea { caret-color: var(--accent); }   /* an accent-coloured text cur
   display: block; width: 100%; padding: 12px var(--gutter); border: 1px solid var(--border); border-radius: var(--radius);
   background: var(--field); color: var(--danger); font: inherit; font-weight: 600; cursor: pointer;
 }
+.button-danger[hidden] { display: none; }
 .button-secondary {
   flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px;
   padding: 12px var(--gutter); border: 1px solid var(--border); border-radius: var(--radius);

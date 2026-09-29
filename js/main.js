@@ -343,6 +343,9 @@ function currentSaltBand() {
 }
 // Sweat sodium for the hydration maths (mg/L): the lab result, or the band's working value
 const sweatSodiumMgPerL = () => fields.sweatSodium ?? currentSaltBand().band.working;
+// Carbs per hour cap from gut training (g/h), or null when it's empty: the plan
+// then follows the standard guidance with no cap
+const gutCarbCap = () => (fields.gutCarbs > 0 ? fields.gutCarbs : null);
 function updateSaltBand() {
   const { band, isSet } = currentSaltBand();
   saltBand.textContent = fields.sweatSodium != null
@@ -370,6 +373,7 @@ function productSummary(product) {
   const parts = [PRODUCT_TYPES[product.type]];
   if (product.carbs != null) parts.push(`${displayNumber(product.carbs, 1)} g carbs`);
   if (product.sodium != null) parts.push(`${displayNumber(product.sodium, 0)} mg sodium`);
+  if (product.caffeine > 0) parts.push(`${displayNumber(product.caffeine, 0)} mg caffeine`);
   if (product.volume != null && ["drink", "tab"].includes(product.type)) parts.push(`in ${formatWithUnit("volume", product.volume)}`);
   return parts.join(" · ");
 }
@@ -401,6 +405,7 @@ let productToRemove = null;
 function renderProducts() {
   productList.textContent = "";
   productsEmpty.hidden = settings.products.length > 0;
+  document.getElementById("removeAllProducts").hidden = settings.products.length === 0;
   settings.products.forEach(product => {
     const card = productTemplate.content.firstElementChild.cloneNode(true);
     makeFoldCard(card, productList, `product-${product.id}`, product.id === openProductId,
@@ -434,9 +439,7 @@ function renderProducts() {
     removeButton.addEventListener("click", () => {
       const hasDetails = Object.keys(product).some(key => !["id", "type"].includes(key));
       if (!hasDetails) return removeProduct(product);
-      productToRemove = product;
-      document.getElementById("removeProductTitle").textContent = `Remove ${productTitle(product)}?`;
-      removeProductDialog.showModal();
+      confirmRemoveProducts(product, `Remove ${productTitle(product)}?`, "You can't undo this.");
     });
     productList.append(card);
   });
@@ -458,13 +461,33 @@ document.getElementById("addProduct").addEventListener("click", () => {
   nameInput.focus();
   nameInput.scrollIntoView({ block: "center", behavior: "smooth" });
 });
+// One confirmation for removing a product or all of them ("all")
 const removeProductDialog = document.getElementById("removeProductDialog");
+function confirmRemoveProducts(target, title, description) {
+  productToRemove = target;
+  document.getElementById("removeProductTitle").textContent = title;
+  document.getElementById("removeProductDesc").textContent = description;
+  removeProductDialog.showModal();
+}
 document.getElementById("removeProductCancel").addEventListener("click", () => removeProductDialog.close());
 removeProductDialog.addEventListener("click", e => { if (e.target === removeProductDialog) removeProductDialog.close(); }); // tap outside
 document.getElementById("removeProductConfirm").addEventListener("click", () => {
   removeProductDialog.close();
-  if (productToRemove) removeProduct(productToRemove);
+  if (productToRemove === "all") {
+    settings.products = [];
+    openProductId = null;
+    saveSettings();
+    renderProducts();
+    document.getElementById("addProduct").focus();
+  } else if (productToRemove) removeProduct(productToRemove);
   productToRemove = null;
+});
+// Products are kept by Clear my details, so they have their own clear
+const removeAllProducts = document.getElementById("removeAllProducts");
+removeAllProducts.addEventListener("click", () => {
+  const count = settings.products.length;
+  confirmRemoveProducts("all", "Remove all products?",
+    `This removes all ${count} product${count === 1 ? "" : "s"}. You can't undo this.`);
 });
 
 // Fill every box from storage, in the current units (on load, after a units
@@ -493,15 +516,15 @@ document.querySelectorAll("[data-unit-choice]").forEach(button => button.addEven
 }));
 renderSettings();
 
-// Clear my details: everything on the settings page except units and theme
+// Clear my details: your details, sweat profile and gut training (not products, bottles, units or theme)
 const resetDialog = document.getElementById("resetDialog");
 document.getElementById("resetApp").addEventListener("click", () => resetDialog.showModal());
 document.getElementById("resetCancel").addEventListener("click", () => resetDialog.close());
 resetDialog.addEventListener("click", e => { if (e.target === resetDialog) resetDialog.close(); }); // tap outside
+// Products and bottles are kit you keep between races, so they stay
+const KIT_KEYS = ["bottleSize", "bottleCount"];
 document.getElementById("resetConfirm").addEventListener("click", () => {
-  Object.keys(fields).forEach(key => delete fields[key]);
-  settings.products = [];
-  openProductId = null;
+  Object.keys(fields).filter(key => !KIT_KEYS.includes(key)).forEach(key => delete fields[key]);
   saveSettings();
   renderSettings();
   resetDialog.close();
@@ -916,9 +939,13 @@ function renderPlans() {
   });
   document.querySelectorAll("[data-plan-empty]").forEach(note => { note.hidden = hasEvent; });
 
-  document.querySelector("[data-gut-note]").textContent = fields.gutCarbs
-    ? `Never more than your gut is trained for (${displayNumber(fields.gutCarbs, 0)} g an hour).`
-    : "Set your gut training in Settings, so this never goes above what you've practised.";
+  const cap = gutCarbCap();
+  document.querySelector("[data-gut-note]").textContent = cap
+    ? `Never more than your gut is trained for (${displayNumber(cap, 0)} g an hour).`
+    : "No gut training set in Settings, so this follows the standard guidance with no cap.";
+  document.querySelector("[data-bottle-kit]").textContent = fields.bottleSize && fields.bottleCount
+    ? `You carry ${displayNumber(fields.bottleCount, 0)} × ${formatWithUnit("volume", fields.bottleSize)}`
+    : "Add your bottles in Settings";
   const { band, isSet } = currentSaltBand();
   document.querySelector("[data-salt-band]").textContent = isSet ? `yours is ${band.name.toLowerCase()}` : "set it in Settings";
 

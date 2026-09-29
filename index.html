@@ -103,7 +103,7 @@
         <div class="field computed-field computed-field--hero"><span id="fluidHourLabel">Per hour</span><output data-result="fluidPerHour" aria-labelledby="fluidHourLabel">– <span data-unit-label="volume"></span>/h</output></div>
         <div class="field computed-field computed-field--hero"><span id="fluidTotalLabel">Total</span><output data-result="fluidTotal" aria-labelledby="fluidTotalLabel">– <span data-unit-label="volume"></span></output></div>
       </div>
-      <div class="field computed-field"><span id="bottlesLabel">Bottles</span><output data-result="bottles" aria-labelledby="bottlesLabel">–</output></div>
+      <div class="field computed-field"><span id="bottlesLabel">Bottles</span><output data-result="bottles" aria-labelledby="bottlesLabel">–</output><span class="computed-field__detail" data-bottle-kit></span></div>
     </div>
     <p class="settings-note">Capped at a safe maximum. In sessions under an hour, drink to thirst.</p>
 
@@ -510,7 +510,7 @@
       <div class="field-group">
         <label class="field"><span>Most carbs per hour you're used to</span><span class="unit-field"><input data-key="gutCarbs" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="e.g. 60" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">g/h</span></span></label>
       </div>
-      <p class="settings-note">Your carb target never goes above this, so you won't be told to take 90 g an hour if you've only practised 40. Raise it as your gut adapts.</p>
+      <p class="settings-note">Your carb target never goes above this, so you won't be told to take 90 g an hour if you've only practised 40. Raise it as your gut adapts. Leave it empty to follow the standard guidance, with no cap.</p>
 
       <h2 class="settings-heading">My products</h2>
       <div id="productList"></div>
@@ -540,6 +540,7 @@
               <div class="field-row">
                 <label class="field"><span>Carbs<span class="sr-only"> per serving in grams</span></span><span class="unit-field"><input data-product-key="carbs" data-format="number" data-decimals="1" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">g</span></span></label>
                 <label class="field"><span>Sodium<span class="sr-only"> per serving in milligrams</span></span><span class="unit-field"><input data-product-key="sodium" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">mg</span></span></label>
+                <label class="field"><span>Caffeine<span class="sr-only"> per serving in milligrams</span></span><span class="unit-field"><input data-product-key="caffeine" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">mg</span></span></label>
               </div>
             </div>
             <div class="product__footer">
@@ -549,6 +550,15 @@
           </div>
         </div>
       </template>
+
+      <h2 class="settings-heading">Bottles</h2>
+      <div class="field-group">
+        <div class="field-row">
+          <label class="field"><span>Bottle size</span><span class="unit-field"><input data-key="bottleSize" data-convert="volume" data-format="number" type="text" inputmode="decimal" placeholder="e.g. 750" autocomplete="off"><span class="unit-field__unit" data-unit-label="volume"></span></span></label>
+          <label class="field"><span>How many you carry</span><span class="unit-field"><input data-key="bottleCount" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="e.g. 2" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">bottles</span></span></label>
+        </div>
+      </div>
+      <p class="settings-note">For how many bottles you'll need and when to refill, e.g. 2 × 750 ml.</p>
 
       <h2 class="settings-heading">Units</h2>
       <h3 class="settings-subheading">Weight and height</h3>
@@ -572,11 +582,13 @@
 
       <h2 class="settings-heading">Reset</h2>
       <button type="button" class="button-danger" id="resetApp">Clear my details</button>
-      <p class="settings-note">Clears everything above except units and appearance.</p>
+      <p class="settings-note">Clears your details, sweat profile and gut training. Your products, bottles, units and appearance are kept.</p>
+      <!-- Products are kit kept between races: Clear my details leaves them, so they have their own clear -->
+      <button type="button" class="button-danger button-block" id="removeAllProducts" hidden>Remove all products</button>
 
       <dialog class="confirm" id="resetDialog" aria-labelledby="resetTitle" aria-describedby="resetDesc">
         <h2 id="resetTitle" tabindex="-1" autofocus>Clear my details?</h2>
-        <p id="resetDesc">This clears your details, sweat profile, gut training and products. Units and appearance stay. You can't undo this.</p>
+        <p id="resetDesc">This clears your details, sweat profile and gut training. Your products, bottles, units and appearance stay. You can't undo this.</p>
         <div class="confirm__actions">
           <button type="button" class="confirm__cancel" id="resetCancel">Keep everything</button>
           <button type="button" class="confirm__ok" id="resetConfirm">Clear</button>
