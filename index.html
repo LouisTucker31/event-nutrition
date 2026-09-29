@@ -106,15 +106,16 @@
     <h3 class="settings-subheading">Fluid</h3>
     <div class="field-group">
       <div class="field-row">
-        <div class="field computed-field computed-field--hero"><span id="fluidHourLabel">Drink per hour</span><output data-result="fluidPerHour" aria-labelledby="fluidHourLabel">– <span data-unit-label="volume"></span>/h</output></div>
-        <div class="field computed-field computed-field--hero"><span id="fluidTotalLabel">Total</span><output data-result="fluidTotal" aria-labelledby="fluidTotalLabel">– <span data-unit-label="volume"></span></output></div>
+        <div class="field computed-field computed-field--hero"><span id="fluidHourLabel">Target per hour</span><output data-result="fluidPerHour" aria-labelledby="fluidHourLabel">– <span data-unit-label="volume"></span>/h</output></div>
+        <div class="field computed-field computed-field--hero"><span id="fluidTotalLabel">You'll drink</span><output data-result="fluidTotal" aria-labelledby="fluidTotalLabel">– <span data-unit-label="volume"></span></output></div>
       </div>
+      <div class="field computed-field"><span id="fluidFromLabel">From</span><output data-result="fluidTotalNote" aria-labelledby="fluidFromLabel">–</output></div>
       <div class="field computed-field"><span id="sweatEstimateLabel">You'll sweat about</span><output data-result="sweatEstimate" aria-labelledby="sweatEstimateLabel">–</output><span class="computed-field__detail" data-result="sweatBasis"></span></div>
-      <div class="field computed-field"><span id="bottlesLabel">Bottles</span><output data-result="bottles" aria-labelledby="bottlesLabel">–</output><span class="computed-field__detail" data-bottle-kit></span></div>
+      <div class="field computed-field"><span id="bottlesLabel">Bottles</span><output data-result="bottles" aria-labelledby="bottlesLabel">–</output><span class="computed-field__detail" data-result="bottleKit"></span></div>
       <div class="field computed-field"><span id="weightLossLabel">Expected weight loss</span><output data-result="weightLoss" aria-labelledby="weightLossLabel">–</output><span class="computed-field__detail" data-result="weightLossNote"></span></div>
     </div>
     <p class="plan-warning" data-result="fluidWarning" hidden></p>
-    <p class="settings-note">About 75% of your sweat, never more than 1 L an hour. In sessions under an hour, drink to thirst. Drinking more than you sweat, or over about 1 L an hour, risks low blood sodium.</p>
+    <p class="settings-note">The target keeps your loss to about 2% of body weight, never over 0.8 L an hour on the run or 1 L on the bike, nor more than you sweat: drinking more risks low blood sodium. In sessions under an hour, drink to thirst. Aid stations count as a 150 ml cup each.</p>
 
     <!-- Triathlon: each leg's time window and its part in the plan (LEG_ROLES in main.js) -->
     <div data-leg-plan-wrap hidden>
@@ -125,7 +126,7 @@
     <h3 class="settings-subheading">Electrolytes</h3>
     <div class="field-group">
       <div class="field-row">
-        <div class="field computed-field computed-field--hero"><span id="sodiumHourLabel">Sodium per hour</span><output data-result="sodiumPerHour" aria-labelledby="sodiumHourLabel">– mg/h</output></div>
+        <div class="field computed-field computed-field--hero"><span id="sodiumHourLabel">Sodium per hour</span><output data-result="sodiumPerHour" aria-labelledby="sodiumHourLabel">– mg/h</output><span class="computed-field__detail" data-result="sodiumNote"></span></div>
         <div class="field computed-field computed-field--hero"><span id="sodiumTotalLabel">Total sodium</span><output data-result="sodiumTotal" aria-labelledby="sodiumTotalLabel">– mg</output></div>
       </div>
       <div class="field computed-field"><span id="mixLabel">What to mix</span><output data-result="mix" aria-labelledby="mixLabel">–</output><span class="computed-field__detail" data-result="mixNote"></span></div>
@@ -138,19 +139,19 @@
     <p class="settings-note" data-products-empty hidden>Add your drink mixes and electrolyte tabs in Settings, under My products.</p>
 
     <h2 class="settings-heading">Before</h2>
-    <!-- Pre-loading only when it applies: hot, over about 2 hours, or a high saltiness band -->
-    <div data-preload hidden>
+    <!-- Pre-loading: recommended for events over 2 hours or 25 °C, or salty sweaters; otherwise optional -->
+    <div data-preload>
       <h3 class="settings-subheading">Pre-loading</h3>
       <div class="field-group">
+        <div class="field computed-field"><span id="preloadStatusLabel">For this event</span><output data-result="preloadStatus" aria-labelledby="preloadStatusLabel">–</output></div>
         <div class="field-row">
-          <div class="field computed-field"><span id="preloadSodiumLabel">Sodium</span><output data-result="preloadSodium" aria-labelledby="preloadSodiumLabel">1,500 mg</output></div>
-          <div class="field computed-field"><span id="preloadFluidLabel">In</span><output data-result="preloadFluid" aria-labelledby="preloadFluidLabel">–</output></div>
+          <div class="field computed-field"><span id="preloadSodiumLabel">Each dose</span><output data-result="preloadSodium" aria-labelledby="preloadSodiumLabel">–</output></div>
+          <div class="field computed-field"><span id="preloadServingsLabel">Using</span><output data-result="preloadServings" aria-labelledby="preloadServingsLabel">–</output></div>
         </div>
-        <div class="field computed-field"><span id="preloadWhenLabel">Finish by</span><output data-result="preloadWhen" aria-labelledby="preloadWhenLabel">–</output></div>
+        <div class="field computed-field"><span id="preloadWhenLabel">When</span><output data-result="preloadWhen" aria-labelledby="preloadWhenLabel">–</output></div>
       </div>
       <p class="settings-note" data-result="preloadWhy"></p>
     </div>
-    <p class="settings-note" data-no-preload>No pre-loading needed: it's for hot events, ones over about 2 hours, or salty sweaters. Drink normally beforehand.</p>
 
     <h2 class="settings-heading">After</h2>
     <div class="field-group">
@@ -167,7 +168,8 @@
          data-set-by      "time" or "distance" (how the duration is given)
          data-event       "race" for race-only parts
          data-env         "outdoor" for outdoor-only fields
-         data-intervals   "yes" or "no": shown only with, or only without, intervals -->
+         data-intervals   "yes" or "no": shown only with, or only without, intervals
+         data-carry       "yes": shown once something is carried on the run -->
   <section class="view view--has-button" id="view-event" hidden>
     <h1 tabindex="-1">Event</h1>
 
@@ -338,6 +340,53 @@
     </div>
     <p class="settings-note" data-types="run bike triathlon other">Heat and humidity are among the biggest drivers of how much you sweat. Indoors, on a turbo or treadmill, you sweat more, with little airflow to cool you. Leave a box blank if you're not sure: it's treated as mild, about 18 °C.</p>
     <p class="settings-note" data-types="swim">In the water, the water temperature and wetsuit matter, not the air. You can't drink mid-swim, so fuelling moves to before and after, or to feed stations on long open-water swims.</p>
+
+    <!-- How you drink: from what you carry, aid stations or both (races; per leg
+         for triathlon). Bike bottles come from Settings; on the run, a handheld
+         or vest if you carry one. data-carry shows the volume once one is chosen. -->
+    <div data-types="run bike triathlon other">
+      <h2 class="settings-heading">Drinking</h2>
+      <div class="field-group">
+        <label class="field" data-event="race" data-types="run bike other"><span>Drinks from</span>
+          <select data-workout-key="drinkFrom">
+            <option value="">Select</option>
+            <option value="bottles">What I carry</option>
+            <option value="aid">Aid stations only</option>
+            <option value="both">Both</option>
+          </select>
+        </label>
+        <div class="field-row" data-event="race" data-types="triathlon">
+          <label class="field"><span>Bike: drinks from</span>
+            <select data-workout-key="bikeDrinkFrom">
+              <option value="">Select</option>
+              <option value="bottles">Bottles I carry</option>
+              <option value="aid">Aid stations only</option>
+              <option value="both">Both</option>
+            </select>
+          </label>
+          <label class="field"><span>Run: drinks from</span>
+            <select data-workout-key="runDrinkFrom">
+              <option value="">Select</option>
+              <option value="bottles">What I carry</option>
+              <option value="aid">Aid stations only</option>
+              <option value="both">Both</option>
+            </select>
+          </label>
+        </div>
+        <div class="field-row" data-types="run triathlon">
+          <label class="field"><span>Carry on the run</span>
+            <select data-workout-key="runCarry">
+              <option value="">Nothing</option>
+              <option value="handheld">Handheld</option>
+              <option value="vest">Vest</option>
+            </select>
+          </label>
+          <label class="field" data-carry="yes"><span>Holding</span><span class="unit-field"><input data-workout-key="runCarryVolume" data-convert="volume" data-format="number" type="text" inputmode="decimal" placeholder="e.g. 500" autocomplete="off"><span class="unit-field__unit" data-unit-label="volume"></span></span></label>
+        </div>
+      </div>
+      <p class="settings-note" data-event="race">Not set: bottles on the bike and aid stations on the run. Your bike bottles are in Settings. Each aid station with water or course drink counts as a 150 ml cup.</p>
+      <p class="settings-note" data-event="training">In training, the bike uses your bottles from Settings and the run what you carry.</p>
+    </div>
 
     <div data-event="race">
       <h2 class="settings-heading">Aid stations</h2>
@@ -616,14 +665,14 @@
         </div>
       </template>
 
-      <h2 class="settings-heading">Bottles</h2>
+      <h2 class="settings-heading">Bike bottles</h2>
       <div class="field-group">
         <div class="field-row">
           <label class="field"><span>Bottle size</span><span class="unit-field"><input data-key="bottleSize" data-convert="volume" data-format="number" type="text" inputmode="decimal" placeholder="e.g. 750" autocomplete="off"><span class="unit-field__unit" data-unit-label="volume"></span></span></label>
           <label class="field"><span>How many you carry</span><span class="unit-field"><input data-key="bottleCount" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="e.g. 2" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">bottles</span></span></label>
         </div>
       </div>
-      <p class="settings-note">For how many bottles you'll need and when to refill, e.g. 2 × 750 ml.</p>
+      <p class="settings-note">What you carry on the bike, e.g. 2 × 750 ml. For the run, set a handheld or vest on the Event page.</p>
 
       <h2 class="settings-heading">Units</h2>
       <h3 class="settings-subheading">Weight and height</h3>

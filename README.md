@@ -47,8 +47,8 @@ assets/icons/
     with carbs, sodium and caffeine per serving (and the water it's mixed
     with, for drinks and tabs), carb type (glucose only or glucose +
     fructose), and an optional daily limit from the label.
-  - *Bottles:* bottle size and how many you carry (e.g. 2 × 750 ml), for the
-    number of bottles and refill timings.
+  - *Bike bottles:* bottle size and how many you carry (e.g. 2 × 750 ml),
+    used on the bike only; the run's handheld or vest is set per event.
   - *Units* (kg, cm or lb, ft in; ml or US fl oz) and *Appearance* (light,
     dark or system).
   - *Reset:* *Clear my details* clears your details, sweat profile and gut
@@ -92,17 +92,30 @@ assets/icons/
     - Sweat rate for the event: your measured rate or sweat level, scaled for
       temperature, humidity, indoors, effort and sport (`SWEAT_SCALING`: these
       factors are starting assumptions, not from a source).
-    - Drink about 75% of it, never over 1 L an hour; under an hour, drink to
-      thirst. A warning shows when the cap is reached (low blood sodium risk).
-    - Expected weight loss (sweat minus drink) as a % of body weight, with a
-      warning over 3%; it sets "Rehydrate with" (1.25–1.5 L per kg lost).
-    - Sodium = what you drink × your sweat saltiness (PF&H), from gels, a cup
-      (150 ml) of course drink at each aid station that has it, then your tab
-      or drink mix, within its daily limit (with the shortfall if it's hit).
-    - Bottles needed and refills from your bottle size and count; how much mix
-      in each bottle.
-    - Pre-loading (1,500 mg sodium in 500 ml, finished 90 minutes before) only
-      when hot (25 °C and over), over 2 hours, or a salty sweater.
+    - Target from need, not a ceiling: need (L/h) = max(0, S × T − 0.02 × W) ÷ T,
+      keeping loss to about 2% of body weight; capped at 0.8 L/h on the run and
+      1.0 L/h on the bike (each triathlon leg its own) and never above the sweat
+      rate. Under an hour, drink to thirst.
+    - What you'll drink = the target or what you can get, whichever is less:
+      what you carry (the bike bottles in Settings; on the run, a handheld or
+      vest from the Event page, never bottles) plus a 150 ml cup at each aid
+      station with water or course drink (`AID_CUP_ML`, an assumption). Races
+      say where you drink from on the Event page (per leg for triathlon);
+      training uses what you carry. Aid-only with no stations asks for them.
+    - Expected loss (sweat minus what you'll drink) in kg and as a % of body
+      weight, with a warning over 3%; it sets "Rehydrate with" (1.25–1.5 L per
+      kg, with some salt).
+    - Sodium = what you'll drink × your sweat saltiness (PF&H), counting gels
+      (from the Nutrition timeline) and course drinks, then your tab or mix in
+      what you carry: whole or half tablets, at most 2 per bottle, never above
+      the product's own strength, within its daily limit after the race-day
+      pre-load (with the shortfall and a suggestion if the limit bites).
+      "Optional for this length" under 2 h 30 below 25 °C. Aid stations only:
+      tablets during are "Not in this plan".
+    - Pre-loading: 750 mg sodium in 500 ml, twice (the evening before, and 90
+      to 45 minutes before the start), using your product's servings (e.g. 2 ×
+      Phizz at 334 mg). Recommended over 2 hours or 25 °C, or for salty
+      sweaters; otherwise optional.
     - Swims: the fluid plan moves to before and after.
   - Triathlons show each leg's time window and its part in the plan: nothing on
     the swim, most carbs and fluid on the bike, gels and sips on the run
@@ -132,6 +145,9 @@ assets/icons/
     and treated as mild (18 °C, 50%), never 0. `eventConditions()` gives the
     plan these, with an indoor flag (indoors raises the sweat estimate: little
     airflow).
+  - *Drinking:* where you drink from on a race (what you carry, aid stations
+    only, or both; per leg for triathlon), and what you carry on the run
+    (nothing, a handheld or a vest, with its volume).
   - *Aid stations* (races only): the course drink and gel, picked from My
     products, and a fold-out card per station (leg, km, what it hands out).
     Cola counts as about 10 g carbs per 100 ml and food about 12 g a piece
