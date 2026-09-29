@@ -29,12 +29,116 @@
 </button>
 <!-- One section per nav tab, in the same order as the tabs (see VIEWS in main.js) -->
 <main class="views">
-  <section class="view view--has-button" id="view-page1">
-    <h1 tabindex="-1">Page 1</h1>
+  <!-- Nutrition and Hydration only display what's worked out from Settings and
+       the Event page (the training workout or the race, whichever is selected
+       there). Each worked-out value is an <output data-result="..."> showing
+       "–" until the formulas are added. -->
+  <section class="view view--has-button" id="view-nutrition">
+    <h1 tabindex="-1">Nutrition</h1>
+    <div class="race-line" data-plan-line></div>
+    <p class="settings-note plan-empty" data-plan-empty hidden>Fill in the Event page to see your plan. <button type="button" class="text-button text-button--accent" data-go-event>Go to Event</button></p>
+
+    <h2 class="settings-heading">During</h2>
+    <div class="field-group">
+      <div class="field-row">
+        <div class="field computed-field computed-field--hero"><span id="carbsHourLabel">Carbs per hour</span><output data-result="carbsPerHour" aria-labelledby="carbsHourLabel">– g/h</output></div>
+        <div class="field computed-field computed-field--hero"><span id="carbsTotalLabel">Total carbs</span><output data-result="carbsTotal" aria-labelledby="carbsTotalLabel">– g</output></div>
+      </div>
+    </div>
+    <p class="settings-note" data-gut-note>Never more than your gut is trained for.</p>
+
+    <h3 class="settings-subheading">Timeline</h3>
+    <div class="field-group">
+      <ol class="timeline" data-result="carbTimeline" aria-label="When to take what">
+        <li class="timeline__item"><span class="timeline__time">–:––</span><span class="timeline__what">–</span></li>
+        <li class="timeline__item"><span class="timeline__time">–:––</span><span class="timeline__what">–</span></li>
+        <li class="timeline__item"><span class="timeline__time">–:––</span><span class="timeline__what">–</span></li>
+      </ol>
+    </div>
+    <p class="settings-note">Times from the start, e.g. “0:20 gel, 0:45 drink”, using your products.</p>
+
+    <h3 class="settings-subheading">From your products</h3>
+    <div class="field-group" data-product-totals="gel chew bar drink other"></div>
+    <p class="settings-note" data-products-empty hidden>Add your gels, drink mixes and bars in Settings, under My products.</p>
+
+    <h2 class="settings-heading">Before</h2>
+    <h3 class="settings-subheading">Day before: carb loading</h3>
+    <div class="field-group">
+      <div class="field-row">
+        <div class="field computed-field"><span id="loadPerKgLabel">Per kg</span><output data-result="loadPerKg" aria-labelledby="loadPerKgLabel">– g/kg</output></div>
+        <div class="field computed-field"><span id="loadTotalLabel">Total carbs</span><output data-result="loadTotal" aria-labelledby="loadTotalLabel">– g</output></div>
+      </div>
+    </div>
+    <p class="settings-note">For sessions over 90 minutes.</p>
+    <h3 class="settings-subheading">Pre-workout meal</h3>
+    <div class="field-group">
+      <div class="field-row">
+        <div class="field computed-field"><span id="mealTimeLabel">Eat by</span><output data-result="mealTime" aria-labelledby="mealTimeLabel">–:––</output></div>
+        <div class="field computed-field"><span id="mealCarbsLabel">Carbs</span><output data-result="mealCarbs" aria-labelledby="mealCarbsLabel">– g</output></div>
+      </div>
+    </div>
+    <p class="settings-note">1–4 hours before the start, worked out per kg.</p>
+
+    <h2 class="settings-heading">After</h2>
+    <div class="field-group">
+      <div class="field-row">
+        <div class="field computed-field"><span id="recoveryCarbsLabel">Recovery carbs</span><output data-result="recoveryCarbs" aria-labelledby="recoveryCarbsLabel">– g</output></div>
+        <div class="field computed-field"><span id="recoveryProteinLabel">Protein</span><output data-result="recoveryProtein" aria-labelledby="recoveryProteinLabel">– g</output></div>
+      </div>
+    </div>
+    <p class="settings-note">Per kg of body weight. Most useful when you train again the same day.</p>
+
+    <p class="plan-disclaimer">These are starting points to test in training, not medical advice.</p>
   </section>
 
-  <section class="view view--has-button" id="view-page2" hidden>
-    <h1 tabindex="-1">Page 2</h1>
+  <section class="view view--has-button" id="view-hydration" hidden>
+    <h1 tabindex="-1">Hydration</h1>
+    <div class="race-line" data-plan-line></div>
+    <p class="settings-note plan-empty" data-plan-empty hidden>Fill in the Event page to see your plan. <button type="button" class="text-button text-button--accent" data-go-event>Go to Event</button></p>
+
+    <h2 class="settings-heading">During</h2>
+    <h3 class="settings-subheading">Fluid</h3>
+    <div class="field-group">
+      <div class="field-row">
+        <div class="field computed-field computed-field--hero"><span id="fluidHourLabel">Per hour</span><output data-result="fluidPerHour" aria-labelledby="fluidHourLabel">– <span data-unit-label="volume"></span>/h</output></div>
+        <div class="field computed-field computed-field--hero"><span id="fluidTotalLabel">Total</span><output data-result="fluidTotal" aria-labelledby="fluidTotalLabel">– <span data-unit-label="volume"></span></output></div>
+      </div>
+      <div class="field computed-field"><span id="bottlesLabel">Bottles</span><output data-result="bottles" aria-labelledby="bottlesLabel">–</output></div>
+    </div>
+    <p class="settings-note">Capped at a safe maximum. In sessions under an hour, drink to thirst.</p>
+
+    <h3 class="settings-subheading">Electrolytes</h3>
+    <div class="field-group">
+      <div class="field-row">
+        <div class="field computed-field computed-field--hero"><span id="sodiumHourLabel">Sodium per hour</span><output data-result="sodiumPerHour" aria-labelledby="sodiumHourLabel">– mg/h</output></div>
+        <div class="field computed-field computed-field--hero"><span id="sodiumTotalLabel">Total sodium</span><output data-result="sodiumTotal" aria-labelledby="sodiumTotalLabel">– mg</output></div>
+      </div>
+      <div class="field computed-field"><span id="mixLabel">What to mix</span><output data-result="mix" aria-labelledby="mixLabel">–</output></div>
+    </div>
+    <p class="settings-note">From how much you drink and how salty your sweat is (<span data-salt-band>not set</span>).</p>
+
+    <h3 class="settings-subheading">From your products</h3>
+    <div class="field-group" data-product-totals="drink tab"></div>
+    <p class="settings-note" data-products-empty hidden>Add your drink mixes and electrolyte tabs in Settings, under My products.</p>
+
+    <h2 class="settings-heading">Before</h2>
+    <h3 class="settings-subheading">Pre-loading</h3>
+    <div class="field-group">
+      <div class="field-row">
+        <div class="field computed-field"><span id="preloadSodiumLabel">Sodium</span><output data-result="preloadSodium" aria-labelledby="preloadSodiumLabel">– mg</output></div>
+        <div class="field computed-field"><span id="preloadFluidLabel">With</span><output data-result="preloadFluid" aria-labelledby="preloadFluidLabel">– <span data-unit-label="volume"></span></output></div>
+      </div>
+      <div class="field computed-field"><span id="preloadWhenLabel">When</span><output data-result="preloadWhen" aria-labelledby="preloadWhenLabel">–</output></div>
+    </div>
+    <p class="settings-note">For hot or long events.</p>
+
+    <h2 class="settings-heading">After</h2>
+    <div class="field-group">
+      <div class="field computed-field computed-field--hero"><span id="rehydrateLabel">Rehydrate with</span><output data-result="rehydrate" aria-labelledby="rehydrateLabel">– <span data-unit-label="volume"></span></output></div>
+    </div>
+    <p class="settings-note">About 1.25–1.5 L for every kg you lose.</p>
+
+    <p class="plan-disclaimer">These are starting points to test in training, not medical advice.</p>
   </section>
 
   <!-- Event: the training session or race to plan for. Fields show and hide with the
@@ -455,20 +559,20 @@
 </svg>
 
 <!-- Tab bar icons: Google Material Symbols Rounded (Apache 2.0), matching
-     Race Ready's. The first two are placeholders
-     copied from Race Ready (bag, checklist); Event is Race Ready's calendar. -->
+     Race Ready's filled style: "nutrition", "water_drop", and Race Ready's
+     calendar for Event. -->
 <nav class="lg-nav lg-surface" aria-label="Main">
   <span class="lg-surface__lens" aria-hidden="true"></span>
   <span class="lg-surface__frost" aria-hidden="true"></span>
   <div class="lg-nav__items">
     <span class="lg-nav__indicator" aria-hidden="true"></span>
     <button type="button" class="lg-nav__item is-active" aria-current="page">
-      <span class="lg-nav__icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M260-120q-24.75 0-42.37-17.63Q200-155.25 200-180v-480q0-24.75 17.63-42.38Q235.25-720 260-720h105v-100q0-24.75 17.63-42.38Q400.25-880 425-880h110q24.75 0 42.38 17.62Q595-844.75 595-820v100h105q24.75 0 42.38 17.62Q760-684.75 760-660v480q0 24.75-17.62 42.37Q724.75-120 700-120q0 17-11.5 28.5T660-80q-17 0-28.5-11.5T620-120H340q0 17-11.5 28.5T300-80q-17 0-28.5-11.5T260-120Zm134.82-480q-12.82 0-21.32 8.62-8.5 8.63-8.5 21.38v300q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63 8.5-8.62 8.5-21.37v-300q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62Zm170 0q-12.82 0-21.32 8.62-8.5 8.63-8.5 21.38v300q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63 8.5-8.62 8.5-21.37v-300q0-12.75-8.68-21.38-8.67-8.62-21.5-8.62ZM425-720h110v-100H425v100Z"/></svg></span>
-      <span class="lg-nav__label">Page 1</span>
+      <span class="lg-nav__icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M295.73-215.73Q220-291.46 220-400q0-88.23 52.62-157.73 52.61-69.5 137.61-92.81-30.69-6.84-54.04-25.23-23.34-18.38-37.96-45.07-14.61-26.7-21.19-57.81-6.58-31.12-4.12-63.81 37.54-3.08 71.47 7.12 33.92 10.19 61.23 31.42 27.3 21.23 44.88 50.31 17.58 29.07 20.81 65.38 12.61-30.23 30.54-57.15 17.92-26.93 40.92-49.93 8.31-8.3 21.07-8.3 12.77 0 21.08 8.3 8.31 8.31 8.31 21.08 0 12.77-8.31 21.08-21.61 21.61-38.23 47.15-16.61 25.54-25.77 54.39 88 20.69 143.54 90.92Q740-490.46 740-400q0 108.54-75.73 184.27T480-140q-108.54 0-184.27-75.73Z"/></svg></span>
+      <span class="lg-nav__label">Nutrition</span>
     </button>
     <button type="button" class="lg-nav__item">
-      <span class="lg-nav__icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m222-299 158-158q9-9 21-8.5t21.39 9.5q8.61 9 8.61 21t-9 21L243-235q-9 9-21 9t-21-9L101-335q-9-9-9-21t9-21q9-9 21-8.5t21 8.5l79 78Zm0-320 158-158q9-9 21-8.5t21.39 9.5q8.61 9 8.61 21t-9 21L243-555q-9 9-21 9t-21-9L101-655q-9-9-9-21t9-21q9-9 21-8.5t21 8.5l79 78Zm328 329q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h300q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H550Zm0-320q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h300q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H550Z"/></svg></span>
-      <span class="lg-nav__label">Page 2</span>
+      <span class="lg-nav__icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M265.73-188.25Q180-276.51 180-407.94q0-58.21 26.39-116.81 26.38-58.59 65.96-112.46 39.57-53.87 85.61-101.34 46.04-47.47 85.5-82.6 7.62-7.23 17.11-10.73 9.49-3.5 19.43-3.5t19.43 3.5q9.49 3.5 17.11 10.73 39.46 35.13 85.5 82.6 46.04 47.47 85.61 101.34 39.58 53.87 65.96 112.46Q780-466.15 780-407.94q0 131.43-85.8 219.69Q608.4-100 479.93-100q-128.47 0-214.2-88.25Zm224.12-17.9q10.46-1 17.23-7.83t6.77-16.47q0-11.24-7.38-17.82t-18.85-5.58q-41 3-89.31-24.03Q350-304.92 338-371.92q-2-10.23-8.58-16.08-6.57-5.85-15.65-5.85-10.92 0-18.19 8.2-7.27 8.19-4.66 21.03 16.23 87.16 78.47 124.62 62.23 37.46 120.46 33.85Z"/></svg></span>
+      <span class="lg-nav__label">Hydration</span>
     </button>
     <button type="button" class="lg-nav__item">
       <span class="lg-nav__icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M596.82-220Q556-220 528-248.18q-28-28.19-28-69Q500-358 528.18-386q28.19-28 69-28Q638-414 666-385.82q28 28.19 28 69Q694-276 665.82-248q-28.19 28-69 28ZM180-80q-24 0-42-18t-18-42v-620q0-24 18-42t42-18h65v-28q0-13.6 9.2-22.8 9.2-9.2 22.8-9.2 14.02 0 23.51 9.2Q310-861.6 310-848v28h340v-28q0-13.6 9.2-22.8 9.2-9.2 22.8-9.2 14.03 0 23.51 9.2Q715-861.6 715-848v28h65q24 0 42 18t18 42v620q0 24-18 42t-42 18H180Zm0-60h600v-430H180v430Z"/></svg></span>

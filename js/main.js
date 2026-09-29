@@ -53,7 +53,7 @@ darkQuery.addEventListener("change", applyTheme);
 applyTheme();
 
 // Views: one per nav tab, in the same order as the tabs in index.html
-const VIEWS = ["page1", "page2", "event"];
+const VIEWS = ["nutrition", "hydration", "event"];
 const APP_TITLE = "Race Nutrition";
 const nav = document.querySelector(".lg-nav");
 const tabs = [...nav.querySelectorAll(".lg-nav__item")];
@@ -70,7 +70,8 @@ function showView(name) {
 
 // Reopen on the page last used
 let savedView = storage.read(STORAGE_KEYS.view, VIEWS[0]);
-if (savedView === "workout") savedView = "event"; // the Event page used to be called Workout
+// Pages that were renamed
+savedView = { page1: "nutrition", page2: "hydration", workout: "event" }[savedView] || savedView;
 const startView = VIEWS.includes(savedView) ? savedView : VIEWS[0];
 // Set the highlighted tab before the nav script reads it
 tabs.forEach((tab, i) => {
@@ -288,16 +289,20 @@ const SALT_BANDS = [
 ];
 const saltSignInputs = [...document.querySelectorAll("[data-salty-sign]")];
 const saltBand = document.getElementById("saltBand");
-function updateSaltBand() {
+// The band, from the lab result or the ticks, and whether either has been given
+function currentSaltBand() {
   const signs = fields.saltySigns || [];
-  if (fields.sweatSodium != null) {
-    const band = SALT_BANDS.find(b => fields.sweatSodium < b.below);
-    saltBand.textContent = `${band.name} (${displayNumber(fields.sweatSodium, 0)} mg/L, from your lab test)`;
-  } else {
-    const band = SALT_BANDS.findLast(b => signs.length >= b.minSigns);
-    saltBand.textContent = `${band.name} (${band.range})`;
-  }
-  saltBand.classList.toggle("is-set", fields.sweatSodium != null || signs.length > 0);
+  const band = fields.sweatSodium != null
+    ? SALT_BANDS.find(b => fields.sweatSodium < b.below)
+    : SALT_BANDS.findLast(b => signs.length >= b.minSigns);
+  return { band, isSet: fields.sweatSodium != null || signs.length > 0 };
+}
+function updateSaltBand() {
+  const { band, isSet } = currentSaltBand();
+  saltBand.textContent = fields.sweatSodium != null
+    ? `${band.name} (${displayNumber(fields.sweatSodium, 0)} mg/L, from your lab test)`
+    : `${band.name} (${band.range})`;
+  saltBand.classList.toggle("is-set", isSet);
 }
 saltSignInputs.forEach(input => input.addEventListener("change", () => {
   setOrDelete(fields, "saltySigns", saltSignInputs.filter(box => box.checked).map(box => Number(box.dataset.saltySign)));
@@ -436,6 +441,7 @@ document.querySelectorAll("[data-unit-choice]").forEach(button => button.addEven
   settings.units[button.dataset.unitChoice] = button.dataset.value;
   saveSettings();
   renderSettings();
+  renderPlans(); // product lines show ml or fl oz
 }));
 renderSettings();
 
@@ -516,10 +522,13 @@ document.querySelectorAll("[data-workout-mode]").forEach(button => button.addEve
 // Dates read "03 Apr 27", as in Race Ready: the text is laid over the phone's
 // date box, which can't be reformatted itself
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function formatShortDate(value) {
+  const [year, month, day] = (value || "").split("-");
+  return year ? `${day} ${MONTHS[Number(month) - 1]} ${year.slice(-2)}` : "";
+}
 function updateDateDisplays() {
   document.querySelectorAll(".date-field").forEach(wrapper => {
-    const [year, month, day] = wrapper.querySelector("input").value.split("-");
-    const text = year ? `${day} ${MONTHS[Number(month) - 1]} ${year.slice(-2)}` : "";
+    const text = formatShortDate(wrapper.querySelector("input").value);
     wrapper.querySelector(".date-field__text").textContent = text;
     wrapper.classList.toggle("has-value", !!text);
   });
@@ -729,6 +738,7 @@ function refreshWorkout() {
   updateWorkoutMaths();
   // Aid station cards show the leg for triathlons only
   if (aidRenderedFor !== workout().type) { aidRenderedFor = workout().type; renderAid(); }
+  renderPlans();
 }
 // Fill every box from storage (on load, after units change, clearing or importing)
 function renderWorkout() {
@@ -834,6 +844,64 @@ importDialog.addEventListener("click", e => { if (e.target === importDialog) imp
 document.getElementById("importConfirm").addEventListener("click", () => { importDialog.close(); importRaceReady(); });
 // Race Ready open in another tab saves to the shared storage: offer the import then
 window.addEventListener("storage", e => { if (e.key === RACE_READY_KEY) { showImport(); importNote.textContent = IMPORT_NOTE; } });
+// Nutrition and Hydration pages: they only display what's worked out from
+// Settings and the Event page's selected workout (training or race). The
+// worked-out values (<output data-result>) show "–" until the formulas are
+// added; this fills in what's already known: which event it's for, the gut
+// limit, the saltiness band and the products to use.
+const WORKOUT_TYPE_NAMES = { run: "Run", bike: "Bike", swim: "Swim", triathlon: "Triathlon", other: "Other" };
+function renderPlans() {
+  const w = workout();
+  const seconds = workoutSeconds();
+  const hasEvent = !!(w.name?.trim() || seconds);
+  document.querySelectorAll("[data-plan-line]").forEach(line => {
+    line.textContent = "";
+    line.hidden = !hasEvent;
+    if (!hasEvent) return;
+    // e.g. "Weymouth Triathlon · Race · 2:44:30 · 13 Jun 27"
+    const title = document.createElement("strong");
+    title.textContent = w.name?.trim() || WORKOUT_TYPE_NAMES[w.type];
+    const rest = [settings.workoutMode === "race" ? "Race" : "Training"];
+    if (seconds) rest.push(formatHMS(seconds));
+    if (w.date) rest.push(formatShortDate(w.date));
+    line.append(title, ` · ${rest.join(" · ")}`);
+  });
+  document.querySelectorAll("[data-plan-empty]").forEach(note => { note.hidden = hasEvent; });
+
+  document.querySelector("[data-gut-note]").textContent = fields.gutCarbs
+    ? `Never more than your gut is trained for (${displayNumber(fields.gutCarbs, 0)} g an hour).`
+    : "Set your gut training in Settings, so this never goes above what you've practised.";
+  const { band, isSet } = currentSaltBand();
+  document.querySelector("[data-salt-band]").textContent = isSet ? `yours is ${band.name.toLowerCase()}` : "set it in Settings";
+
+  // One line per product that could be used, with how many servings (to come)
+  document.querySelectorAll("[data-product-totals]").forEach(group => {
+    const types = group.dataset.productTotals.split(" ");
+    const products = settings.products.filter(product => types.includes(product.type));
+    group.textContent = "";
+    group.hidden = products.length === 0;
+    group.nextElementSibling.hidden = products.length > 0; // the "add your products" note
+    products.forEach(product => {
+      const row = document.createElement("div");
+      row.className = "field computed-field";
+      const name = document.createElement("span");
+      name.textContent = productTitle(product);
+      const amount = document.createElement("output");
+      amount.dataset.result = `servings-${product.id}`;
+      amount.textContent = "– servings";
+      const detail = document.createElement("span");
+      detail.className = "computed-field__detail";
+      detail.textContent = productSummary(product);
+      row.append(name, amount, detail);
+      group.append(row);
+    });
+  });
+}
+// "Go to Event" (shown until the Event page has something in it)
+document.querySelectorAll("[data-go-event]").forEach(button =>
+  button.addEventListener("click", () => tabs[VIEWS.indexOf("event")].click()));
+settingsDialog.addEventListener("close", renderPlans); // products, gut or saltiness may have changed
+
 showImport();
 renderWorkout();
 

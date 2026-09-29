@@ -43,6 +43,19 @@ assets/icons/
     drinks and tabs).
   - *Units* (kg, cm or lb, ft in; ml or US fl oz), *Appearance* (light, dark or
     system) and *Clear my details*, which keeps units and appearance.
+- **Nutrition and Hydration pages** (first two tabs): display only, for
+  whichever workout is selected on the Event page (training or race), with its
+  name, type, time and date under the title. The layout is in place; worked-out
+  values show "–" until the formulas are added (each is an
+  `<output data-result="...">` in `index.html`).
+  - *Nutrition:* carbs per hour and in total, a timeline of what to take when,
+    servings of each of your products; before (day-before carb loading, the
+    pre-workout meal) and after (recovery carbs and protein).
+  - *Hydration:* fluid per hour and in total, bottles, sodium per hour and in
+    total, what to mix, servings of your drinks and tabs; pre-loading before,
+    and how much to drink after.
+  - Already live: the event line, the gut limit, the saltiness band and the
+    product names, and a "not medical advice" note on both.
 - **Event page** (third tab, with Race Ready's calendar icon), laid out like Race Ready's Events page:
   - *Training / Race:* two separate workouts, saved separately. The race stays
     as a reference while the training workout is changed for each session.
@@ -71,10 +84,7 @@ assets/icons/
 
 ## Still to do
 
-- **First two tabs.** Rename their labels and page headings in `index.html`,
-  and the view ids (`view-page1`, `view-page2`) with `VIEWS` in `js/main.js`.
-  Their icons are Race Ready's (bag, checklist) as placeholders; swap them for
-  Material Symbols Rounded, matching Race Ready's.
+- **Formulas** for the Nutrition and Hydration values.
 - **Distance and temperature units** are km and °C only for now.
 
 Every app on `louistucker31.github.io` shares one localStorage and one set of
