@@ -43,6 +43,24 @@ assets/icons/
     drinks and tabs).
   - *Units* (kg, cm or lb, ft in; ml or US fl oz), *Appearance* (light, dark or
     system) and *Clear my details*, which keeps units and appearance.
+- **Workout page** (third tab), laid out like Race Ready's Events page:
+  - *Import from Race Ready:* shown when Race Ready has an event saved in this
+    browser (the apps share one localStorage). Brings in the name, date, start
+    time, distances, elevation, and paces worked out from the goal times. It
+    only reads Race Ready's data.
+  - *Workout:* training or race, name, type (run, bike, swim, triathlon,
+    strength, HYROX, BJJ/MMA, other), date and start time.
+  - *Intensity:* easy, steady, tempo, race pace or intervals. The interval
+    builder (warm-up, reps × work and rest, cool-down) works out the total time
+    and a time-weighted overall intensity.
+  - *Duration:* a time (one per leg for triathlon), or distance plus pace or
+    speed, with the total worked out. Timer-style boxes as in Race Ready.
+  - *Conditions:* indoor or outdoor, temperature, humidity and elevation.
+  - *Aid stations* (races only): the course drink and gel, picked from My
+    products, and a fold-out card per station (leg, km, what it hands out).
+  - *Sweat test:* weight before and after plus fluid drunk, over the workout's
+    duration; saving sets the sweat rate in Settings.
+  - *Start a new workout* clears the page, keeping settings and products.
 - **Units:** numbers are stored metric (kg, cm, ml, L/h) and converted for
   display, so switching units back and forth never changes a value.
 - **PWA:** installs to the home screen, works offline, checks for an update on
@@ -50,10 +68,11 @@ assets/icons/
 
 ## Still to do
 
-- **Tabs.** Rename the tab labels and page headings in `index.html`, and the
-  view ids (`view-page1`…) with `VIEWS` in `js/main.js`, keeping the same
-  order as the tabs. The tab icons are the triathlon app's (bag, checklist,
-  calendar) as placeholders; swap them for Material Symbols Rounded.
+- **First two tabs.** Rename their labels and page headings in `index.html`,
+  and the view ids (`view-page1`, `view-page2`) with `VIEWS` in `js/main.js`.
+  Their icons are Race Ready's (bag, checklist) as placeholders; swap them for
+  Material Symbols Rounded at weight 300, as the Workout tab's "exercise" is.
+- **Distance and temperature units** are km and °C only for now.
 
 Every app on `louistucker31.github.io` shares one localStorage and one set of
 service-worker caches, so this app's keys and caches start with
@@ -66,8 +85,9 @@ to drop their old cache straight away (they update on next launch either way).
 ## Data and privacy
 
 Everything you enter (your details, sweat profile, gut training, products,
-units and theme) and the last page used stay in this browser's localStorage on
-this device. Nothing is sent to a server. "Clear my details" in settings
+the workout, units and theme) and the last page used stay in this browser's
+localStorage on this device. Nothing is sent to a server. Import from Race
+Ready reads Race Ready's saved event from the same storage and never changes it. "Clear my details" in settings
 removes your details and products. No analytics, tracking, cookies or
 third-party scripts.
 

@@ -53,7 +53,7 @@ darkQuery.addEventListener("change", applyTheme);
 applyTheme();
 
 // Views: one per nav tab, in the same order as the tabs in index.html
-const VIEWS = ["page1", "page2", "page3"];
+const VIEWS = ["page1", "page2", "workout"];
 const APP_TITLE = "Race Nutrition";
 const nav = document.querySelector(".lg-nav");
 const tabs = [...nav.querySelectorAll(".lg-nav__item")];
@@ -108,15 +108,17 @@ settingsDialog.addEventListener("close", restoreTitle);
 
 // Number boxes (data-format="number") format as you type: digits and one decimal
 // point, with commas for thousands (1,500). data-decimals limits the decimal
-// places (default 2; 0 allows whole numbers only).
-function formatNumber(raw, decimals = 2) {
+// places (default 2; 0 allows whole numbers only); data-signed allows a leading
+// minus (temperature); data-max caps the value (humidity).
+function formatNumber(raw, decimals = 2, signed = false) {
+  const minus = signed && raw.trim().startsWith("-") ? "-" : "";
   let digits = raw.replace(/[^\d.]/g, "");
   if (decimals === 0) digits = digits.replace(/\./g, "");
   const dot = digits.indexOf(".");
   if (dot !== -1) digits = digits.slice(0, dot + 1) + digits.slice(dot + 1).replace(/\./g, "");
   let [whole, fraction] = digits.split(".");
   whole = whole.replace(/^0+(?=\d)/, "").slice(0, 7).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  return fraction === undefined ? whole : `${whole || "0"}.${fraction.slice(0, decimals)}`;
+  return minus + (fraction === undefined ? whole : `${whole || "0"}.${fraction.slice(0, decimals)}`);
 }
 const decimalsFor = input => Number(input.dataset.decimals ?? 2);
 // A box's text as a number, or null when it's empty
@@ -125,23 +127,59 @@ function parseNumber(text) {
   return Number.isFinite(value) ? value : null;
 }
 // A stored number as box text, rounded to the box's decimal places (1.50 -> "1.5")
-const displayNumber = (value, decimals) => formatNumber(String(Number(value.toFixed(decimals))), decimals);
+const displayNumber = (value, decimals) => formatNumber(String(Number(value.toFixed(decimals))), decimals, value < 0);
+
+// Timer boxes work like a phone timer, as in Race Ready: digits fill in from the
+// right. data-format="duration" reads h:mm:ss (1500 -> 0:15:00); "minsec" reads
+// m:ss, for paces and interval lengths (530 -> 5:30). Stored as seconds.
+function formatTimer(raw, type) {
+  const digits = raw.replace(/\D/g, "").replace(/^0+/, "").slice(0, type === "duration" ? 6 : 4);
+  if (!digits) return "";
+  const padded = digits.padStart(type === "duration" ? 5 : 3, "0");
+  return type === "duration"
+    ? `${Number(padded.slice(0, -4))}:${padded.slice(-4, -2)}:${padded.slice(-2)}`
+    : `${Number(padded.slice(0, -2))}:${padded.slice(-2)}`;
+}
+const pad2 = n => String(n).padStart(2, "0");
+const toSeconds = text => String(text).split(":").reduce((total, part) => total * 60 + (Number(part) || 0), 0);
+function formatHMS(seconds) {
+  const s = Math.round(seconds);
+  return `${Math.floor(s / 3600)}:${pad2(Math.floor(s / 60) % 60)}:${pad2(s % 60)}`;
+}
+const formatMS = seconds => { const s = Math.round(seconds); return `${Math.floor(s / 60)}:${pad2(s % 60)}`; };
+const isTimer = input => ["duration", "minsec"].includes(input.dataset.format);
 
 function formatAsYouType(input) {
+  const type = input.dataset.format;
   input.addEventListener("input", () => {
     const before = input.value;
-    const after = formatNumber(before, decimalsFor(input));
+    if (isTimer(input)) {
+      const after = formatTimer(before, type);
+      if (after !== before) input.value = after;
+      input.setSelectionRange(after.length, after.length); // always type at the end, like a timer
+      return;
+    }
+    let after = formatNumber(before, decimalsFor(input), "signed" in input.dataset);
+    if (input.dataset.max && parseNumber(after) > Number(input.dataset.max)) after = input.dataset.max;
     if (after === before) return;
     // Keep the caret after the same digit it was after
     const caret = input.selectionStart ?? before.length;
-    const keptLeftOfCaret = before.slice(0, caret).replace(/[^\d.]/g, "").length;
+    const keptLeftOfCaret = before.slice(0, caret).replace(/[^\d.-]/g, "").length;
     input.value = after;
     let pos = 0, seen = 0;
-    while (pos < after.length && seen < keptLeftOfCaret) { if (/[\d.]/.test(after[pos])) seen++; pos++; }
+    while (pos < after.length && seen < keptLeftOfCaret) { if (/[\d.-]/.test(after[pos])) seen++; pos++; }
     input.setSelectionRange(pos, pos);
   }, { capture: true }); // before the save handlers, so the formatted value is what's saved
+  // Tidy timer overflow when leaving the box: 0:75 -> 1:15
+  if (isTimer(input)) input.addEventListener("blur", () => {
+    if (!input.value) return;
+    const tidy = type === "duration" ? formatHMS(toSeconds(input.value)) : formatMS(toSeconds(input.value));
+    if (tidy === input.value) return;
+    input.value = tidy;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
 }
-document.querySelectorAll("#settingsDialog [data-format]").forEach(formatAsYouType);
+document.querySelectorAll("#settingsDialog [data-format], #view-workout [data-format]").forEach(formatAsYouType);
 
 // Units. Everything is stored metric (kg, cm, ml, L/h) and converted for display,
 // so switching units never loses precision. data-convert on a box names its
@@ -158,14 +196,19 @@ const toDisplay = (kind, value) => value * unitFor(kind).factor;
 const fromDisplay = (kind, value) => value / unitFor(kind).factor;
 const formatWithUnit = (kind, value) => `${displayNumber(toDisplay(kind, value), unitFor(kind).decimals)} ${unitFor(kind).label}`;
 
-// Show a stored value in its box, in the current units
+// Show a stored value in its box, in the current units (timers from seconds)
 function fillNumberBox(input, value) {
+  if (isTimer(input)) {
+    input.value = value == null ? "" : input.dataset.format === "duration" ? formatHMS(value) : formatMS(value);
+    return;
+  }
   const kind = input.dataset.convert;
   if (kind) input.dataset.decimals = unitFor(kind).decimals;
   input.value = value == null ? "" : displayNumber(kind ? toDisplay(kind, value) : value, decimalsFor(input));
 }
-// A box's value to store: a metric number, or undefined when empty
+// A box's value to store: a metric number (or seconds), or undefined when empty
 function readNumberBox(input) {
+  if (isTimer(input)) return input.value ? toSeconds(input.value) : undefined;
   const value = parseNumber(input.value);
   if (value === null) return undefined;
   return input.dataset.convert ? fromDisplay(input.dataset.convert, value) : value;
@@ -278,8 +321,28 @@ function productSummary(product) {
   if (product.volume != null && ["drink", "tab"].includes(product.type)) parts.push(`in ${formatWithUnit("volume", product.volume)}`);
   return parts.join(" · ");
 }
-// Cards start folded; one is open at a time, as in Race Ready's checklists.
-// A new product opens so it can be filled in.
+// Fold-out cards (products, aid stations) in a list: they start folded and one
+// is open at a time, as in Race Ready's checklists. onToggle(open) lets the
+// caller remember which is open across re-renders.
+function makeFoldCard(card, list, id, open, onToggle) {
+  const toggle = card.querySelector(".disclosure__toggle");
+  const body = card.querySelector(".disclosure__body");
+  body.id = id;
+  toggle.setAttribute("aria-controls", id);
+  const setOpen = (el, isOpen) => {
+    el.classList.toggle("is-open", isOpen);
+    el.querySelector(".disclosure__toggle").setAttribute("aria-expanded", String(isOpen));
+  };
+  setOpen(card, open);
+  toggle.addEventListener("click", () => {
+    const opening = !card.classList.contains("is-open");
+    list.querySelectorAll(".disclosure.is-open").forEach(other => setOpen(other, false));
+    setOpen(card, opening);
+    onToggle(opening);
+  });
+}
+
+// A new product opens so it can be filled in
 let openProductId = null;
 let productToRemove = null;
 
@@ -288,24 +351,8 @@ function renderProducts() {
   productsEmpty.hidden = settings.products.length > 0;
   settings.products.forEach(product => {
     const card = productTemplate.content.firstElementChild.cloneNode(true);
-    const toggle = card.querySelector(".disclosure__toggle");
-    const body = card.querySelector(".disclosure__body");
-    body.id = `product-${product.id}`;
-    toggle.setAttribute("aria-controls", body.id);
-    const setOpen = open => {
-      card.classList.toggle("is-open", open);
-      toggle.setAttribute("aria-expanded", String(open));
-    };
-    setOpen(product.id === openProductId);
-    toggle.addEventListener("click", () => {
-      const open = !card.classList.contains("is-open");
-      productList.querySelectorAll(".product.is-open").forEach(other => {
-        other.classList.remove("is-open");
-        other.querySelector(".disclosure__toggle").setAttribute("aria-expanded", "false");
-      });
-      setOpen(open);
-      openProductId = open ? product.id : null;
-    });
+    makeFoldCard(card, productList, `product-${product.id}`, product.id === openProductId,
+      open => { openProductId = open ? product.id : null; });
 
     const title = card.querySelector(".product__title");
     const summary = card.querySelector(".product__summary");
@@ -388,6 +435,7 @@ document.querySelectorAll("[data-unit-choice]").forEach(button => button.addEven
   settings.units[button.dataset.unitChoice] = button.dataset.value;
   saveSettings();
   renderSettings();
+  renderWorkout(); // its sweat test boxes use the same units
 }));
 renderSettings();
 
@@ -404,6 +452,363 @@ document.getElementById("resetConfirm").addEventListener("click", () => {
   renderSettings();
   resetDialog.close();
 });
+
+// Workout page: the session or race to plan for. Saved in settings.workout:
+// strings for choices, dates and times; numbers for distances (swim m, bike and
+// run km), speeds (km/h), temperature (°C), humidity (%), elevation (m) and
+// weights (kg); seconds for durations, paces and intervals.
+const WORKOUT_DEFAULTS = { type: "run", event: "training", setBy: "time", intensity: "steady",
+  workIntensity: "tempo", environment: "outdoor" };
+settings.workout = { ...WORKOUT_DEFAULTS, aidStations: [], ...settings.workout };
+const workout = () => settings.workout;
+const workoutView = document.getElementById("view-workout");
+const workoutInputs = [...workoutView.querySelectorAll("[data-workout-key]")];
+const DISTANCE_TYPES = ["run", "bike", "swim", "triathlon"];
+// Time or distance only applies to sports with a distance; the rest use time
+const effectiveSetBy = () => DISTANCE_TYPES.includes(workout().type) ? workout().setBy : "time";
+
+workoutInputs.forEach(input => input.addEventListener("input", () => {
+  const key = input.dataset.workoutKey;
+  setOrDelete(workout(), key, input.dataset.format ? readNumberBox(input) : input.value);
+  saveSettings();
+  refreshWorkout();
+}));
+document.querySelectorAll("[data-workout-choice]").forEach(button => button.addEventListener("click", () => {
+  workout()[button.dataset.workoutChoice] = button.dataset.value;
+  saveSettings();
+  refreshWorkout();
+}));
+
+// Dates read "03 Apr 27", as in Race Ready: the text is laid over the phone's
+// date box, which can't be reformatted itself
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function updateDateDisplays() {
+  document.querySelectorAll(".date-field").forEach(wrapper => {
+    const [year, month, day] = wrapper.querySelector("input").value.split("-");
+    const text = year ? `${day} ${MONTHS[Number(month) - 1]} ${year.slice(-2)}` : "";
+    wrapper.querySelector(".date-field__text").textContent = text;
+    wrapper.classList.toggle("has-value", !!text);
+  });
+}
+document.querySelectorAll(".date-field input").forEach(input => input.addEventListener("input", updateDateDisplays));
+
+// Show only what applies (see the data- attributes described in index.html);
+// rows with nothing left in them are hidden too
+const conditionOf = el => ["types", "setBy", "event", "env", "intervals"].some(key => key in el.dataset);
+function applyWorkoutVisibility() {
+  const w = workout();
+  const checks = {
+    types: value => value.split(" ").includes(w.type),
+    setBy: value => value === effectiveSetBy(),
+    event: value => value === w.event,
+    env: value => value === w.environment,
+    intervals: value => value === (w.intensity === "intervals" ? "yes" : "no")
+  };
+  workoutView.querySelectorAll("[data-types], [data-set-by], [data-event], [data-env], [data-intervals]").forEach(el => {
+    el.hidden = !Object.entries(checks).every(([key, passes]) => !(key in el.dataset) || passes(el.dataset[key]));
+  });
+  workoutView.querySelectorAll(".field-row").forEach(row => {
+    const ownHidden = conditionOf(row) && row.hidden;
+    row.hidden = ownHidden || [...row.children].every(child => child.hidden);
+  });
+  // The total is only worth showing when it's worked out, not typed in
+  document.getElementById("totalTimeField").hidden =
+    effectiveSetBy() === "time" && w.type !== "triathlon" && w.intensity !== "intervals";
+  workoutView.querySelectorAll(".field-group").forEach(group => {
+    const visible = [...group.children].filter(child => !child.hidden);
+    [...group.children].forEach(child => child.classList.toggle("is-last-visible", child === visible[visible.length - 1]));
+  });
+  workoutView.querySelectorAll("[data-workout-choice]").forEach(button =>
+    button.setAttribute("aria-pressed", String(w[button.dataset.workoutChoice] === button.dataset.value)));
+  document.getElementById("workoutName").placeholder = w.event === "race" ? "e.g. Weymouth Triathlon" : "e.g. Sunday long run";
+}
+
+// Intervals: total time and a time-weighted overall intensity. Warm-up,
+// cool-down and rest count as easy; rest comes between reps, not after the last.
+const INTENSITY_LEVELS = { easy: 1, steady: 2, tempo: 3, race: 4, hard: 5 };
+const INTENSITY_NAMES = ["Easy", "Steady", "Tempo", "Race pace"];
+function intervalPlan(w) {
+  if (!(w.reps > 0 && w.work > 0)) return null;
+  const easy = (w.warmup || 0) + (w.cooldown || 0) + (w.reps - 1) * (w.rest || 0);
+  const hard = w.reps * w.work;
+  const total = easy + hard;
+  const level = (easy * INTENSITY_LEVELS.easy + hard * INTENSITY_LEVELS[w.workIntensity]) / total;
+  return { total, name: INTENSITY_NAMES[Math.min(3, Math.round(level) - 1)] };
+}
+
+// Time for each leg, from times typed in, or from distance and pace or speed.
+// Legs that can't be worked out yet are left out.
+function workoutLegs(w) {
+  if (w.intensity === "intervals") {
+    const plan = intervalPlan(w);
+    return plan ? [["Total", plan.total]] : [];
+  }
+  const tri = w.type === "triathlon";
+  const legs = [];
+  const add = (name, seconds) => { if (seconds > 0) legs.push([name, seconds]); };
+  if (effectiveSetBy() === "time") {
+    if (!tri) add("Total", w.duration);
+    else { add("Swim", w.swimTime); add("T1", w.t1Time); add("Bike", w.bikeTime); add("T2", w.t2Time); add("Run", w.runTime); }
+    return legs;
+  }
+  const has = leg => tri || w.type === leg;
+  if (has("swim")) add("Swim", w.swimDistance / 100 * w.swimPace);
+  if (tri) add("T1", w.t1Time);
+  if (has("bike")) add("Bike", w.bikeDistance / w.bikeSpeed * 3600);
+  if (tri) add("T2", w.t2Time);
+  if (has("run")) add("Run", w.runDistance * w.runPace);
+  return legs;
+}
+const workoutSeconds = () => workoutLegs(workout()).reduce((total, [, seconds]) => total + seconds, 0);
+
+const totalTime = document.getElementById("totalTime");
+const totalTimeDetail = document.getElementById("totalTimeDetail");
+function updateWorkoutMaths() {
+  const w = workout();
+  const plan = intervalPlan(w);
+  const overall = document.getElementById("overallIntensity");
+  const intervalTotal = document.getElementById("intervalTotal");
+  overall.textContent = plan ? plan.name : "–";
+  intervalTotal.textContent = plan ? formatHMS(plan.total) : "–";
+  overall.classList.toggle("is-set", !!plan);
+  intervalTotal.classList.toggle("is-set", !!plan);
+
+  const legs = workoutLegs(w);
+  const total = workoutSeconds();
+  totalTime.textContent = total ? formatHMS(total) : "–";
+  totalTime.classList.toggle("is-set", total > 0);
+  totalTimeDetail.textContent = legs.length > 1 ? legs.map(([name, seconds]) => `${name} ${formatHMS(seconds)}`).join(" · ") : "";
+  updateWorkoutSweatTest();
+}
+
+// Sweat test after the session: the workout's own duration is the time
+const workoutRate = document.getElementById("workoutRate");
+const saveWorkoutRate = document.getElementById("saveWorkoutRate");
+const workoutRateNote = document.getElementById("workoutRateNote");
+const WORKOUT_RATE_NOTE = workoutRateNote.textContent;
+let workoutTestRate = null;
+function updateWorkoutSweatTest() {
+  const { testBefore, testAfter, testDrank = 0 } = workout();
+  const seconds = workoutSeconds();
+  workoutTestRate = null;
+  if (testBefore != null && testAfter != null && seconds > 0) {
+    const rate = (testBefore - testAfter + testDrank / 1000) / (seconds / 3600);
+    if (rate > 0 && rate < 5) workoutTestRate = rate; // outside this, a number is probably mistyped
+  }
+  const filledIn = testBefore != null || testAfter != null;
+  workoutRate.textContent = workoutTestRate !== null ? formatWithUnit("rate", workoutTestRate)
+    : filledIn && !seconds ? "Add the workout's duration above"
+    : filledIn ? "Check the numbers above" : "–";
+  workoutRate.classList.toggle("is-set", workoutTestRate !== null);
+  saveWorkoutRate.disabled = workoutTestRate === null;
+}
+saveWorkoutRate.addEventListener("click", () => {
+  fields.sweatRate = workoutTestRate;
+  saveSettings();
+  renderSettings();
+  workoutRateNote.textContent = `Saved. Your sweat rate in Settings is now ${formatWithUnit("rate", workoutTestRate)}.`;
+});
+workoutView.querySelectorAll('[data-workout-key^="test"]').forEach(input =>
+  input.addEventListener("input", () => { workoutRateNote.textContent = WORKOUT_RATE_NOTE; }));
+
+// Course products: picked from My products (drinks and tabs, or gels and chews)
+function fillCourseSelects() {
+  workoutView.querySelectorAll("[data-course-types]").forEach(select => {
+    const types = select.dataset.courseTypes.split(" ");
+    select.textContent = "";
+    select.append(new Option("Not known", ""));
+    settings.products.filter(product => types.includes(product.type))
+      .forEach(product => select.append(new Option(productTitle(product), product.id)));
+    const saved = workout()[select.dataset.workoutKey];
+    select.value = settings.products.some(product => product.id === saved) ? saved : "";
+  });
+}
+settingsDialog.addEventListener("close", fillCourseSelects); // products may have changed
+
+// Aid stations: one fold-out card each, in the order added. Triathlons say which
+// leg each is on (bike or run).
+const aidList = document.getElementById("aidList");
+const aidTemplate = document.getElementById("aidTemplate");
+const AID_ITEMS = { water: "Water", drink: "Course drink", gel: "Course gel", cola: "Cola", food: "Food" };
+let openAidId = null;
+function aidSummary(station) {
+  const parts = [];
+  if (workout().type === "triathlon") parts.push(station.leg === "run" ? "Run" : "Bike");
+  if (station.at != null) parts.push(`${displayNumber(station.at, 1)} km`);
+  const items = (station.items || []).map(item => AID_ITEMS[item]);
+  if (items.length) parts.push(items.join(", "));
+  return parts.join(" · ");
+}
+function renderAid() {
+  const stations = workout().aidStations;
+  aidList.textContent = "";
+  document.getElementById("aidEmpty").hidden = stations.length > 0;
+  stations.forEach((station, index) => {
+    const card = aidTemplate.content.firstElementChild.cloneNode(true);
+    makeFoldCard(card, aidList, `aid-${station.id}`, station.id === openAidId,
+      open => { openAidId = open ? station.id : null; });
+    card.querySelector(".aid__title").textContent = `Aid station ${index + 1}`;
+    const summary = card.querySelector(".aid__summary");
+    const showSummary = () => { summary.textContent = aidSummary(station); };
+    showSummary();
+    card.querySelector("[data-aid-leg]").hidden = workout().type !== "triathlon";
+    card.querySelectorAll("[data-aid-key]").forEach(input => {
+      const key = input.dataset.aidKey;
+      if (input.dataset.format) { formatAsYouType(input); fillNumberBox(input, station[key]); }
+      else input.value = station[key] ?? "bike";
+      input.addEventListener("input", () => {
+        setOrDelete(station, key, input.dataset.format ? readNumberBox(input) : input.value);
+        saveSettings();
+        showSummary();
+      });
+    });
+    card.querySelectorAll("[data-aid-item]").forEach(box => {
+      box.checked = (station.items || []).includes(box.dataset.aidItem);
+      box.addEventListener("change", () => {
+        station.items = [...card.querySelectorAll("[data-aid-item]:checked")].map(b => b.dataset.aidItem);
+        saveSettings();
+        showSummary();
+      });
+    });
+    const remove = card.querySelector(".aid__remove");
+    remove.setAttribute("aria-label", `Remove aid station ${index + 1}`);
+    remove.addEventListener("click", () => {
+      workout().aidStations = stations.filter(s => s !== station);
+      saveSettings();
+      renderAid();
+      document.getElementById("addAid").focus();
+    });
+    aidList.append(card);
+  });
+}
+document.getElementById("addAid").addEventListener("click", () => {
+  const stations = workout().aidStations;
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  // Start on the same leg as the last one
+  stations.push({ id, leg: stations[stations.length - 1]?.leg || "bike", items: ["water"] });
+  openAidId = id;
+  saveSettings();
+  renderAid();
+  const at = aidList.lastElementChild.querySelector('[data-aid-key="at"]');
+  at.focus();
+  at.scrollIntoView({ block: "center", behavior: "smooth" });
+});
+
+// Refresh what depends on the choices (after any change)
+let aidRenderedFor = null;
+function refreshWorkout() {
+  applyWorkoutVisibility();
+  updateWorkoutMaths();
+  // Aid station cards show the leg for triathlons only
+  if (aidRenderedFor !== workout().type) { aidRenderedFor = workout().type; renderAid(); }
+}
+// Fill every box from storage (on load, after units change, clearing or importing)
+function renderWorkout() {
+  workoutInputs.filter(input => !input.dataset.courseTypes).forEach(input => {
+    const value = workout()[input.dataset.workoutKey];
+    if (input.dataset.format) fillNumberBox(input, value);
+    else input.value = value ?? "";
+  });
+  workoutView.querySelectorAll("[data-unit-label]").forEach(label => { label.textContent = unitFor(label.dataset.unitLabel).label; });
+  fillCourseSelects();
+  updateDateDisplays();
+  renderAid();
+  aidRenderedFor = workout().type;
+  refreshWorkout();
+}
+
+// Start a new workout: clears this page, keeping settings and products
+const newWorkoutDialog = document.getElementById("newWorkoutDialog");
+document.getElementById("newWorkout").addEventListener("click", () => newWorkoutDialog.showModal());
+document.getElementById("newWorkoutCancel").addEventListener("click", () => newWorkoutDialog.close());
+newWorkoutDialog.addEventListener("click", e => { if (e.target === newWorkoutDialog) newWorkoutDialog.close(); }); // tap outside
+document.getElementById("newWorkoutConfirm").addEventListener("click", () => {
+  settings.workout = { ...WORKOUT_DEFAULTS, aidStations: [] };
+  openAidId = null;
+  saveSettings();
+  renderWorkout();
+  workoutRateNote.textContent = WORKOUT_RATE_NOTE;
+  newWorkoutDialog.close();
+});
+
+// Import from Race Ready. Both apps are on louistucker31.github.io, so they share
+// one localStorage: Race Ready keeps its current event in "tri-settings-v1" as
+// events[eventType], with distances as text ("1,500") and goal times as h:mm:ss.
+// This only ever reads Race Ready's data.
+const RACE_READY_KEY = "tri-settings-v1";
+const RACE_READY_TYPES = { triathlon: "triathlon", running: "run", cycling: "bike", swimming: "swim" };
+function raceReadyEvent() {
+  const saved = storage.read(RACE_READY_KEY, null);
+  const type = saved?.eventType || "triathlon";
+  const event = saved?.events?.[type];
+  if (!event || !RACE_READY_TYPES[type]) return null;
+  const hasDetails = ["raceName", "raceDate", "swimDistance", "bikeDistance", "runDistance"].some(key => event[key]);
+  return hasDetails ? { type: RACE_READY_TYPES[type], event } : null;
+}
+function workoutFromRaceReady({ type, event }) {
+  const number = key => parseNumber(String(event[key] ?? "")) ?? undefined;
+  const seconds = key => (event[key] ? toSeconds(event[key]) : 0) || undefined;
+  const tri = type === "triathlon";
+  const has = leg => tri || type === leg;
+  const w = { ...WORKOUT_DEFAULTS, type, event: "race", intensity: "race", setBy: "distance", aidStations: [],
+    name: event.raceName || undefined, date: event.raceDate || undefined, start: event.raceStart || undefined,
+    environment: type === "swim" && event.swimType === "Pool" ? "indoor" : "outdoor" };
+  // Paces and speed from the goal times, when there are some
+  if (has("swim")) {
+    w.swimDistance = number("swimDistance");
+    const goal = seconds("goalSwimTime");
+    if (goal && w.swimDistance) w.swimPace = Math.round(goal / (w.swimDistance / 100));
+  }
+  if (has("bike")) {
+    w.bikeDistance = number("bikeDistance");
+    const goal = seconds("goalBikeTime");
+    if (goal && w.bikeDistance) w.bikeSpeed = Math.round(w.bikeDistance / (goal / 3600) * 10) / 10;
+  }
+  if (has("run")) {
+    w.runDistance = number("runDistance");
+    const goal = seconds("goalRunTime");
+    if (goal && w.runDistance) w.runPace = Math.round(goal / w.runDistance);
+  }
+  if (tri) {
+    w.t1Time = seconds("goalT1Time");
+    w.t2Time = seconds("goalT2Time");
+    w.bikeElevation = number("bikeElevation");
+    w.runElevation = number("runElevation");
+  } else if (type === "bike") w.elevation = number("bikeElevation");
+  else if (type === "run") w.elevation = number("runElevation");
+  // Keep the sweat test numbers, which belong to the athlete, not the race
+  ["testBefore", "testAfter", "testDrank"].forEach(key => { w[key] = workout()[key]; });
+  Object.keys(w).forEach(key => { if (w[key] === undefined) delete w[key]; });
+  return w;
+}
+const importBlock = document.getElementById("importBlock");
+const importNote = document.getElementById("importNote");
+const IMPORT_NOTE = importNote.textContent;
+const importDialog = document.getElementById("importDialog");
+const showImport = () => { importBlock.hidden = !raceReadyEvent(); };
+function importRaceReady() {
+  const found = raceReadyEvent();
+  if (!found) return showImport();
+  settings.workout = workoutFromRaceReady(found);
+  openAidId = null;
+  saveSettings();
+  renderWorkout();
+  importNote.textContent = `Imported ${settings.workout.name || "your race"} from Race Ready.`;
+}
+document.getElementById("importRaceReady").addEventListener("click", () => {
+  // Ask first if this page has anything on it beyond the sweat test
+  const w = workout();
+  const inUse = Object.keys(w).some(key => !(key in WORKOUT_DEFAULTS) && !key.startsWith("test") && key !== "aidStations"
+    && w[key] !== undefined) || w.aidStations.length > 0;
+  if (inUse) importDialog.showModal(); else importRaceReady();
+});
+document.getElementById("importCancel").addEventListener("click", () => importDialog.close());
+importDialog.addEventListener("click", e => { if (e.target === importDialog) importDialog.close(); }); // tap outside
+document.getElementById("importConfirm").addEventListener("click", () => { importDialog.close(); importRaceReady(); });
+// Race Ready open in another tab saves to the shared storage: offer the import then
+window.addEventListener("storage", e => { if (e.key === RACE_READY_KEY) { showImport(); importNote.textContent = IMPORT_NOTE; } });
+showImport();
+renderWorkout();
 
 // PWA: register the service worker (needs http(s), so skipped on file://)
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
