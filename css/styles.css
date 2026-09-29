@@ -148,6 +148,8 @@ input, textarea { caret-color: var(--accent); }   /* an accent-coloured text cur
 .segmented[hidden] { display: none; }
 /* Race-only sections are wrapped, so their heading isn't the page's first */
 [data-event] > .settings-heading:first-of-type { margin-top: 24px; }
+/* Training / Race, under the Workout title: switches the whole page */
+.workout-mode { margin-top: 16px; }
 /* Import from Race Ready, above the first heading */
 .import-button { width: 100%; margin-top: 16px; }
 

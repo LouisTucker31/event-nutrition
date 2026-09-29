@@ -44,11 +44,14 @@ assets/icons/
   - *Units* (kg, cm or lb, ft in; ml or US fl oz), *Appearance* (light, dark or
     system) and *Clear my details*, which keeps units and appearance.
 - **Workout page** (third tab), laid out like Race Ready's Events page:
-  - *Import from Race Ready:* shown when Race Ready has an event saved in this
+  - *Training / Race:* two separate workouts, saved separately. The race stays
+    as a reference while the training workout is changed for each session.
+    Everything below applies to whichever is showing.
+  - *Import from Race Ready* (race only): shown when Race Ready has an event saved in this
     browser (the apps share one localStorage). Brings in the name, date, start
     time, distances, elevation, and paces worked out from the goal times. It
     only reads Race Ready's data.
-  - *Workout:* training or race, name, type (run, bike, swim, triathlon,
+  - *Details:* name, type (run, bike, swim, triathlon,
     other), date and start time.
   - *Intensity:* easy, steady, tempo, race pace or intervals. The interval
     builder (warm-up, reps × work and rest, cool-down) works out the total time
@@ -60,7 +63,8 @@ assets/icons/
     products, and a fold-out card per station (leg, km, what it hands out).
   - *Sweat test:* weight before and after plus fluid drunk, over the workout's
     duration; saving sets the sweat rate in Settings.
-  - *Start a new workout* clears the page, keeping settings and products.
+  - *Start a new workout* (training) or *Clear this race* clears just that one,
+    keeping the other, settings and products.
 - **Units:** numbers are stored metric (kg, cm, ml, L/h) and converted for
   display, so switching units back and forth never changes a value.
 - **PWA:** installs to the home screen, works offline, checks for an update on

@@ -453,16 +453,32 @@ document.getElementById("resetConfirm").addEventListener("click", () => {
   resetDialog.close();
 });
 
-// Workout page: the session or race to plan for. Saved in settings.workout:
-// strings for choices, dates and times; numbers for distances (swim m, bike and
-// run km), speeds (km/h), temperature (°C), humidity (%), elevation (m) and
-// weights (kg); seconds for durations, paces and intervals.
-const WORKOUT_DEFAULTS = { type: "run", event: "training", setBy: "time", intensity: "steady",
-  workIntensity: "tempo", environment: "outdoor" };
-settings.workout = { ...WORKOUT_DEFAULTS, aidStations: [], ...settings.workout };
-// Strength, HYROX and BJJ / MMA were removed as types: those workouts become Other
-if (["strength", "hyrox", "combat"].includes(settings.workout.type)) { settings.workout.type = "other"; saveSettings(); }
-const workout = () => settings.workout;
+// Workout page: two separate workouts, one for training and one for the race,
+// in settings.workouts.training and .race; settings.workoutMode says which is
+// showing. The race stays as it is while the training one is edited for each
+// session. Each is saved as strings for choices, dates and times; numbers for
+// distances (swim m, bike and run km), speeds (km/h), temperature (°C),
+// humidity (%), elevation (m) and weights (kg); seconds for durations, paces
+// and intervals.
+const WORKOUT_DEFAULTS = { type: "run", setBy: "time", intensity: "steady", workIntensity: "tempo", environment: "outdoor" };
+const WORKOUT_MODES = ["training", "race"];
+const blankWorkout = mode => ({ ...WORKOUT_DEFAULTS, ...(mode === "race" && { intensity: "race" }), aidStations: [] });
+// Earlier versions kept one workout, marked training or race: it moves to its slot
+if (settings.workout) {
+  const { event, ...saved } = settings.workout;
+  settings.workoutMode = event === "race" ? "race" : "training";
+  settings.workouts = { [settings.workoutMode]: saved };
+  delete settings.workout;
+}
+settings.workouts = settings.workouts || {};
+WORKOUT_MODES.forEach(mode => {
+  const w = settings.workouts[mode] = { ...blankWorkout(mode), ...settings.workouts[mode] };
+  // Strength, HYROX and BJJ / MMA were removed as types: those workouts become Other
+  if (["strength", "hyrox", "combat"].includes(w.type)) w.type = "other";
+});
+if (!WORKOUT_MODES.includes(settings.workoutMode)) settings.workoutMode = "training";
+saveSettings();
+const workout = () => settings.workouts[settings.workoutMode];
 const workoutView = document.getElementById("view-workout");
 const workoutInputs = [...workoutView.querySelectorAll("[data-workout-key]")];
 const DISTANCE_TYPES = ["run", "bike", "swim", "triathlon"];
@@ -479,6 +495,16 @@ document.querySelectorAll("[data-workout-choice]").forEach(button => button.addE
   workout()[button.dataset.workoutChoice] = button.dataset.value;
   saveSettings();
   refreshWorkout();
+}));
+// Training / Race: switch which workout the page shows and edits
+document.querySelectorAll("[data-workout-mode]").forEach(button => button.addEventListener("click", () => {
+  if (settings.workoutMode === button.dataset.workoutMode) return;
+  settings.workoutMode = button.dataset.workoutMode;
+  openAidId = null;
+  saveSettings();
+  renderWorkout();
+  workoutRateNote.textContent = WORKOUT_RATE_NOTE;
+  importNote.textContent = IMPORT_NOTE;
 }));
 
 // Dates read "03 Apr 27", as in Race Ready: the text is laid over the phone's
@@ -502,7 +528,7 @@ function applyWorkoutVisibility() {
   const checks = {
     types: value => value.split(" ").includes(w.type),
     setBy: value => value === effectiveSetBy(),
-    event: value => value === w.event,
+    event: value => value === settings.workoutMode,
     env: value => value === w.environment,
     intervals: value => value === (w.intensity === "intervals" ? "yes" : "no")
   };
@@ -522,8 +548,33 @@ function applyWorkoutVisibility() {
   });
   workoutView.querySelectorAll("[data-workout-choice]").forEach(button =>
     button.setAttribute("aria-pressed", String(w[button.dataset.workoutChoice] === button.dataset.value)));
-  document.getElementById("workoutName").placeholder = w.event === "race" ? "e.g. Weymouth Triathlon" : "e.g. Sunday long run";
+  const text = MODE_TEXT[settings.workoutMode];
+  document.querySelectorAll("[data-workout-mode]").forEach(button =>
+    button.setAttribute("aria-pressed", String(button.dataset.workoutMode === settings.workoutMode)));
+  document.getElementById("workoutModeNote").textContent = text.note;
+  document.getElementById("workoutName").placeholder = text.placeholder;
+  document.getElementById("newWorkout").textContent = text.reset;
+  document.getElementById("newWorkoutNote").textContent = text.resetNote;
+  document.getElementById("newWorkoutTitle").textContent = `${text.reset}?`;
+  document.getElementById("newWorkoutDesc").textContent = text.resetConfirm;
 }
+// Wording that changes with Training / Race
+const MODE_TEXT = {
+  training: {
+    note: "Change this for each session. Your race is kept separately.",
+    placeholder: "e.g. Sunday long run",
+    reset: "Start a new workout",
+    resetNote: "Clears this training workout. Your race, settings and products are kept.",
+    resetConfirm: "This clears the training workout. Your race, settings and products stay. You can't undo this."
+  },
+  race: {
+    note: "Your race stays here while you change the training workout.",
+    placeholder: "e.g. Weymouth Triathlon",
+    reset: "Clear this race",
+    resetNote: "Clears the race. Your training workout, settings and products are kept.",
+    resetConfirm: "This clears the race. Your training workout, settings and products stay. You can't undo this."
+  }
+};
 
 // Intervals: total time and a time-weighted overall intensity. Warm-up,
 // cool-down and rest count as easy; rest comes between reps, not after the last.
@@ -719,13 +770,14 @@ function renderWorkout() {
   refreshWorkout();
 }
 
-// Start a new workout: clears this page, keeping settings and products
+// Start a new workout / Clear this race: clears the one showing, keeping the
+// other, settings and products
 const newWorkoutDialog = document.getElementById("newWorkoutDialog");
 document.getElementById("newWorkout").addEventListener("click", () => newWorkoutDialog.showModal());
 document.getElementById("newWorkoutCancel").addEventListener("click", () => newWorkoutDialog.close());
 newWorkoutDialog.addEventListener("click", e => { if (e.target === newWorkoutDialog) newWorkoutDialog.close(); }); // tap outside
 document.getElementById("newWorkoutConfirm").addEventListener("click", () => {
-  settings.workout = { ...WORKOUT_DEFAULTS, aidStations: [] };
+  settings.workouts[settings.workoutMode] = blankWorkout(settings.workoutMode);
   openAidId = null;
   saveSettings();
   renderWorkout();
@@ -752,7 +804,7 @@ function workoutFromRaceReady({ type, event }) {
   const seconds = key => (event[key] ? toSeconds(event[key]) : 0) || undefined;
   const tri = type === "triathlon";
   const has = leg => tri || type === leg;
-  const w = { ...WORKOUT_DEFAULTS, type, event: "race", intensity: "race", setBy: "distance", aidStations: [],
+  const w = { ...blankWorkout("race"), type, setBy: "distance",
     name: event.raceName || undefined, date: event.raceDate || undefined, start: event.raceStart || undefined,
     environment: type === "swim" && event.swimType === "Pool" ? "indoor" : "outdoor" };
   // Paces and speed from the goal times, when there are some
@@ -778,8 +830,8 @@ function workoutFromRaceReady({ type, event }) {
     w.runElevation = number("runElevation");
   } else if (type === "bike") w.elevation = number("bikeElevation");
   else if (type === "run") w.elevation = number("runElevation");
-  // Keep the sweat test numbers, which belong to the athlete, not the race
-  ["testBefore", "testAfter", "testDrank"].forEach(key => { w[key] = workout()[key]; });
+  // Keep the race's own sweat test numbers
+  ["testBefore", "testAfter", "testDrank"].forEach(key => { w[key] = settings.workouts.race[key]; });
   Object.keys(w).forEach(key => { if (w[key] === undefined) delete w[key]; });
   return w;
 }
@@ -791,15 +843,16 @@ const showImport = () => { importBlock.hidden = !raceReadyEvent(); };
 function importRaceReady() {
   const found = raceReadyEvent();
   if (!found) return showImport();
-  settings.workout = workoutFromRaceReady(found);
+  settings.workouts.race = workoutFromRaceReady(found);
+  settings.workoutMode = "race";
   openAidId = null;
   saveSettings();
   renderWorkout();
-  importNote.textContent = `Imported ${settings.workout.name || "your race"} from Race Ready.`;
+  importNote.textContent = `Imported ${settings.workouts.race.name || "your race"} from Race Ready.`;
 }
 document.getElementById("importRaceReady").addEventListener("click", () => {
-  // Ask first if this page has anything on it beyond the sweat test
-  const w = workout();
+  // Ask first if the race has anything in it beyond the sweat test
+  const w = settings.workouts.race;
   const inUse = Object.keys(w).some(key => !(key in WORKOUT_DEFAULTS) && !key.startsWith("test") && key !== "aidStations"
     && w[key] !== undefined) || w.aidStations.length > 0;
   if (inUse) importDialog.showModal(); else importRaceReady();

@@ -47,17 +47,21 @@
   <section class="view view--has-button" id="view-workout" hidden>
     <h1 tabindex="-1">Workout</h1>
 
-    <div id="importBlock" hidden>
+    <!-- Training and Race are two separate workouts, each saved on its own, so
+         the race stays put while each training session is edited -->
+    <div class="segmented workout-mode" role="group" aria-label="Show the training workout or the race">
+      <button type="button" data-workout-mode="training">Training</button>
+      <button type="button" data-workout-mode="race">Race</button>
+    </div>
+    <p class="settings-note" id="workoutModeNote"></p>
+
+    <div data-event="race"><div id="importBlock" hidden>
       <button type="button" class="button-secondary import-button" id="importRaceReady"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M480-337q-6 0-11-2t-10-7L316-489q-9-9-8.5-21t9.5-21q9-9 21-9t21 9l91 92v-341q0-13 8.5-21.5T480-810q13 0 21.5 8.5T510-780v341l92-92q9-9 21-8.5t21 9.5q8 9 8.5 21t-8.5 21L501-346q-5 5-10 7t-11 2ZM220-160q-24 0-42-18t-18-42v-113q0-13 8.5-21.5T190-363q13 0 21.5 8.5T220-333v113h520v-113q0-13 8.5-21.5T770-363q13 0 21.5 8.5T800-333v113q0 24-18 42t-42 18H220Z"/></svg>Import from Race Ready</button>
       <p class="settings-note" id="importNote">Brings in your race's name, date, start time, distances, goal times and elevation.</p>
-    </div>
+    </div></div>
 
-    <h2 class="settings-heading">Workout</h2>
-    <div class="segmented" role="group" aria-label="Training or race">
-      <button type="button" data-workout-choice="event" data-value="training">Training</button>
-      <button type="button" data-workout-choice="event" data-value="race">Race</button>
-    </div>
-    <div class="field-group spaced">
+    <h2 class="settings-heading">Details</h2>
+    <div class="field-group">
       <label class="field"><span>Name (optional)</span><input data-workout-key="name" id="workoutName" type="text" autocapitalize="words" placeholder="e.g. Sunday long run" autocomplete="off"></label>
       <label class="field"><span>Type</span>
         <select data-workout-key="type">
@@ -229,12 +233,13 @@
     <p class="settings-note" id="workoutRateNote" role="status">After the session, weigh yourself naked before and after, and note what you drank. Saving updates Settings, so every estimate after it is more accurate.</p>
 
     <h2 class="settings-heading">Reset</h2>
+    <!-- Wording for training or race is set by main.js (RESET_TEXT) -->
     <button type="button" class="button-danger" id="newWorkout">Start a new workout</button>
-    <p class="settings-note">Clears this page. Your settings and products are kept.</p>
+    <p class="settings-note" id="newWorkoutNote">Clears this training workout. Your race, settings and products are kept.</p>
 
     <dialog class="confirm" id="newWorkoutDialog" aria-labelledby="newWorkoutTitle" aria-describedby="newWorkoutDesc">
       <h2 id="newWorkoutTitle" tabindex="-1" autofocus>Start a new workout?</h2>
-      <p id="newWorkoutDesc">This clears everything on this page. Your settings and products stay. You can't undo this.</p>
+      <p id="newWorkoutDesc">This clears the training workout. Your race, settings and products stay. You can't undo this.</p>
       <div class="confirm__actions">
         <button type="button" class="confirm__cancel" id="newWorkoutCancel">Keep it</button>
         <button type="button" class="confirm__ok" id="newWorkoutConfirm">Clear</button>
@@ -242,8 +247,8 @@
     </dialog>
 
     <dialog class="confirm" id="importDialog" aria-labelledby="importTitle" aria-describedby="importDesc">
-      <h2 id="importTitle" tabindex="-1" autofocus>Replace this workout?</h2>
-      <p id="importDesc">Your Race Ready event replaces what's on this page. Your sweat test numbers stay.</p>
+      <h2 id="importTitle" tabindex="-1" autofocus>Replace your race?</h2>
+      <p id="importDesc">Your Race Ready event replaces the race here. Your training workout stays.</p>
       <div class="confirm__actions">
         <button type="button" class="confirm__cancel" id="importCancel">Cancel</button>
         <button type="button" class="confirm__primary" id="importConfirm">Import</button>
