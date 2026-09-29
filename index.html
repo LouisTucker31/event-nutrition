@@ -409,6 +409,7 @@
       <h3 class="settings-subheading">How much you sweat</h3>
       <div class="field-group">
         <label class="field"><span>Compared with other people</span>
+          <!-- Each option shows its base rate (SWEAT_LEVELS in main.js), in the chosen units -->
           <select data-key="sweatLevel">
             <option value="">Select</option>
             <option value="less">Less than most</option>
@@ -417,18 +418,64 @@
           </select>
         </label>
         <label class="field"><span>Measured sweat rate (optional)</span><span class="unit-field"><input data-key="sweatRate" data-convert="rate" data-format="number" type="text" inputmode="decimal" placeholder="Use the test below" autocomplete="off"><span class="unit-field__unit" data-unit-label="rate"></span></span></label>
+        <!-- The conditions the rate was measured in, shown once there's a rate -->
+        <div class="field-row" id="rateConditions" hidden>
+          <label class="field"><span>Measured at</span><span class="unit-field"><input data-key="sweatRateTemp" data-format="number" data-decimals="0" data-signed type="text" inputmode="decimal" placeholder="18" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">°C</span></span></label>
+          <label class="field"><span>Sport</span>
+            <select data-key="sweatRateSport">
+              <option value="">Select</option>
+              <option value="run">Run</option>
+              <option value="bike">Bike</option>
+              <option value="swim">Swim</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label class="field"><span>Effort</span>
+            <select data-key="sweatRateEffort">
+              <option value="">Select</option>
+              <option value="easy">Easy</option>
+              <option value="steady">Steady</option>
+              <option value="tempo">Tempo</option>
+              <option value="race">Race pace</option>
+              <option value="hard">Hard</option>
+            </select>
+          </label>
+        </div>
       </div>
-      <p class="settings-note">A measured rate is used in place of your answer above.</p>
+      <p class="settings-note">Less, average and more are for about 18 °C at a steady effort. A measured rate is used instead, adjusted from the conditions it was measured in, so a winter run isn't used as it is for a hot race.</p>
 
       <div class="disclosure" id="sweatTest">
         <h4><button type="button" class="disclosure__toggle" aria-expanded="false" aria-controls="sweatTestBody"><span class="disclosure__chevron" aria-hidden="true">▶</span><span class="disclosure__title">How to measure your sweat rate</span></button></h4>
         <div class="disclosure__body" id="sweatTestBody">
           <ol class="steps">
             <li>Go to the toilet, then weigh yourself naked and dry.</li>
-            <li>Train for about an hour at race effort, in conditions like race day. Note how much you drink.</li>
+            <li>Train for about an hour. Note how much you drink, the temperature and how hard you went.</li>
             <li>Towel off and weigh yourself naked again, before you drink or go to the toilet.</li>
           </ol>
           <div class="field-group">
+            <!-- Conditions of the test, copied to the measured rate with it -->
+            <div class="field-row">
+              <label class="field"><span>Temperature</span><span class="unit-field"><input data-key="testTemp" data-format="number" data-decimals="0" data-signed type="text" inputmode="decimal" placeholder="18" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">°C</span></span></label>
+              <label class="field"><span>Sport</span>
+                <select data-key="testSport">
+                  <option value="">Select</option>
+                  <option value="run">Run</option>
+                  <option value="bike">Bike</option>
+                  <option value="swim">Swim</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label class="field"><span>Effort</span>
+                <select data-key="testEffort">
+                  <option value="">Select</option>
+                  <option value="easy">Easy</option>
+                  <option value="steady">Steady</option>
+                  <option value="tempo">Tempo</option>
+                  <option value="race">Race pace</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </label>
+            </div>
             <div class="field-row">
               <label class="field"><span>Weight before</span><span class="unit-field"><input data-key="testBefore" data-convert="weight" data-format="number" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span class="unit-field__unit" data-unit-label="weight"></span></span></label>
               <label class="field"><span>Weight after</span><span class="unit-field"><input data-key="testAfter" data-convert="weight" data-format="number" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span class="unit-field__unit" data-unit-label="weight"></span></span></label>

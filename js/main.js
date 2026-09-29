@@ -225,7 +225,41 @@ fieldInputs.forEach(input => input.addEventListener("input", () => {
   saveSettings();
   updateSweatTest();
   updateSaltBand();
+  updateRateConditions();
 }));
+
+// Sweat rate. "Less / average / more" each have a base rate (L/h) for the
+// reference conditions, about 18 °C at a steady effort. A measured rate keeps
+// the conditions it was measured in (temperature, sport, effort). Either way,
+// sweatBaseline() gives the plan a rate plus its conditions, for it to scale to
+// the event's temperature, intensity and sport.
+const SWEAT_LEVELS = { less: 0.5, average: 0.9, more: 1.3 };
+const SWEAT_REFERENCE = { temperature: 18, effort: "steady" };
+function sweatBaseline() {
+  if (fields.sweatRate != null) {
+    return { rate: fields.sweatRate, measured: true,
+      temperature: fields.sweatRateTemp ?? SWEAT_REFERENCE.temperature,
+      effort: fields.sweatRateEffort || SWEAT_REFERENCE.effort,
+      sport: fields.sweatRateSport || null };
+  }
+  if (!SWEAT_LEVELS[fields.sweatLevel]) return null;
+  return { rate: SWEAT_LEVELS[fields.sweatLevel], measured: false, ...SWEAT_REFERENCE, sport: null };
+}
+// Show each level's base rate in the list, in the chosen units
+const sweatLevelOptions = [...document.querySelectorAll('[data-key="sweatLevel"] option')].filter(option => option.value);
+sweatLevelOptions.forEach(option => { option.dataset.label = option.textContent; });
+function labelSweatLevels() {
+  sweatLevelOptions.forEach(option => {
+    option.textContent = `${option.dataset.label} (${formatWithUnit("rate", SWEAT_LEVELS[option.value])})`;
+  });
+}
+// The measured rate's conditions show once there's a measured rate
+const rateConditions = document.getElementById("rateConditions");
+function updateRateConditions() {
+  rateConditions.hidden = fields.sweatRate == null;
+  // No divider under the rate box when it's the last thing in the group
+  rateConditions.previousElementSibling.classList.toggle("is-last-visible", rateConditions.hidden);
+}
 
 // Height: one box in cm, or feet and inches
 const heightInputs = { cm: document.getElementById("heightCm"), ft: document.getElementById("heightFt"), in: document.getElementById("heightIn") };
@@ -273,10 +307,18 @@ function updateSweatTest() {
   testResult.classList.toggle("is-set", testRate !== null);
   useTestResult.disabled = testRate === null;
 }
+// Using the result also copies the test's conditions to the measured rate
 useTestResult.addEventListener("click", () => {
   fields.sweatRate = testRate;
+  setOrDelete(fields, "sweatRateTemp", fields.testTemp);
+  setOrDelete(fields, "sweatRateSport", fields.testSport);
+  setOrDelete(fields, "sweatRateEffort", fields.testEffort);
   saveSettings();
-  fillNumberBox(document.querySelector('[data-key="sweatRate"]'), fields.sweatRate);
+  ["sweatRate", "sweatRateTemp", "sweatRateSport", "sweatRateEffort"].forEach(key => {
+    const input = document.querySelector(`[data-key="${key}"]`);
+    if (input.dataset.format) fillNumberBox(input, fields[key]); else input.value = fields[key] ?? "";
+  });
+  updateRateConditions();
 });
 
 // Saltiness band: from a lab result if there is one, otherwise from how many of
@@ -428,11 +470,13 @@ document.getElementById("removeProductConfirm").addEventListener("click", () => 
 // Fill every box from storage, in the current units (on load, after a units
 // change and after clearing)
 function renderSettings() {
+  labelSweatLevels();
   fieldInputs.forEach(input => {
     if (input.dataset.format) fillNumberBox(input, fields[input.dataset.key]);
     else input.value = fields[input.dataset.key] ?? "";
   });
   fillHeight();
+  updateRateConditions();
   saltSignInputs.forEach(box => { box.checked = (fields.saltySigns || []).includes(Number(box.dataset.saltySign)); });
   document.querySelectorAll("[data-unit-choice]").forEach(button =>
     button.setAttribute("aria-pressed", String(settings.units[button.dataset.unitChoice] === button.dataset.value)));

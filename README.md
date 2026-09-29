@@ -32,8 +32,10 @@ assets/icons/
   follows the page, e.g. "Page 2 – Race Nutrition".
 - **Settings page**, in this order:
   - *My details:* sex, age, weight and height.
-  - *Sweat profile:* how much you sweat compared with others, or a measured
-    sweat rate (with a fold-out sweat test that works it out); the six
+  - *Sweat profile:* how much you sweat compared with others (base rates of
+    0.5, 0.9 and 1.3 L/h at about 18 °C and a steady effort), or a measured
+    sweat rate with the temperature, sport and effort it was measured at (the
+    fold-out sweat test works it out and copies its conditions over); the six
     salty-sweater signs, which give a saltiness band (0–1 ticked low, 2–3
     average, 4–6 high; worked out as 500, 950 and 1,500 mg/L), or a lab
     sweat-sodium result in mg/L, which overrides them.
