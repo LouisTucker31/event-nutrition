@@ -163,7 +163,7 @@ input, textarea { caret-color: var(--accent); }   /* an accent-coloured text cur
 /* Triathlon: a heading row for each leg, with what it's for */
 .timeline__item--leg { font-weight: 600; }
 .timeline__item--leg .timeline__time { color: var(--text); }
-.timeline__item--leg .timeline__what span { display: block; font-weight: 400; font-size: 0.85rem; color: var(--muted-2); }
+.timeline__what span { display: block; font-weight: 400; font-size: 0.85rem; color: var(--muted-2); }  /* a leg's part, or a feed's running total */
 .timeline__item--placeholder { color: var(--faint); }
 .plan-swim-note { margin: 0 4px 8px; }
 /* Safety warnings on the plan (drinking too much, losing too much weight) */
@@ -225,6 +225,7 @@ input[type=checkbox] { width: 18px; height: 18px; margin: 1px 0 0; flex-shrink: 
 }
 .text-button--danger { color: var(--danger); }
 .button-block { width: 100%; margin-top: 12px; }
+.field-group--after-note { margin-top: 12px; }   /* a second group under a section's note */
 
 /* Settings pop-up: full screen, over the nav, scrolls on its own */
 .settings-sheet {

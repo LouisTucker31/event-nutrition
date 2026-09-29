@@ -374,6 +374,7 @@ function productSummary(product) {
   if (product.carbs != null) parts.push(`${displayNumber(product.carbs, 1)} g carbs`);
   if (product.sodium != null) parts.push(`${displayNumber(product.sodium, 0)} mg sodium`);
   if (product.caffeine > 0) parts.push(`${displayNumber(product.caffeine, 0)} mg caffeine`);
+  if (product.carbType) parts.push(product.carbType === "dual" ? "glucose + fructose" : "glucose only");
   if (product.volume != null && ["drink", "tab"].includes(product.type)) parts.push(`in ${formatWithUnit("volume", product.volume)}`);
   return parts.join(" · ");
 }
@@ -496,7 +497,7 @@ function renderSettings() {
   labelSweatLevels();
   fieldInputs.forEach(input => {
     if (input.dataset.format) fillNumberBox(input, fields[input.dataset.key]);
-    else input.value = fields[input.dataset.key] ?? "";
+    else input.value = fields[input.dataset.key] ?? input.dataset.default ?? ""; // e.g. meal hours default to 2
   });
   fillHeight();
   updateRateConditions();
@@ -965,22 +966,35 @@ document.getElementById("importConfirm").addEventListener("click", () => { impor
 // Race Ready open in another tab saves to the shared storage: offer the import then
 window.addEventListener("storage", e => { if (e.key === RACE_READY_KEY) { showImport(); importNote.textContent = IMPORT_NOTE; } });
 // Nutrition maths. Carbs during go by how long the session is (CARB_GUIDANCE,
-// g per hour), capped by gut training when it's set. Before and after go by
-// body weight: carb loading 10–12 g/kg a day for the 36–48 hours before
-// sessions over 90 minutes; a pre-workout meal of 1 g/kg for each hour before
-// the start (1–4 hours; early starts get a smaller one 2 hours before);
-// recovery 1.0–1.2 g/kg of carbs an hour for the first few hours, with about
-// 0.3 g/kg of protein, stressed only when training again within 8 hours.
+// g per hour), capped by gut training when it's set, at 60 g/h when every carb
+// product in My products is glucose only, and at 60 g/h over 4 hours unless
+// there's a glucose + fructose product. The timeline spaces feeds of your
+// first gel or chew at the top of that target (after any carbs from a drink mix
+// in the hydration plan), starting with a gel 15 minutes before the start.
+// Before and after go by body weight: carb loading tiered by session length
+// (CARB_LOADING), shown per day with kcal; a pre-race meal of 1 g/kg up to 1
+// g/kg for each hour before the start (at most 4 g/kg), eaten the number of
+// hours before set in Settings; recovery 1.0–1.2 g/kg of carbs an hour for the
+// first few hours, with about 0.3 g/kg of protein, stressed only when training
+// again within 8 hours.
 const CARB_GUIDANCE = [
   { upTo: 45 * 60, min: 0, max: 0 },
   { upTo: 75 * 60, min: 0, max: 30 },
-  { upTo: 120 * 60, min: 30, max: 60 },
-  { upTo: Infinity, min: 60, max: 90 }
+  { upTo: 150 * 60, min: 30, max: 60 },
+  { upTo: 240 * 60, min: 60, max: 90 },
+  { upTo: Infinity, min: 60, max: 90, maxNeedsDual: true } // 90 only with glucose + fructose
 ];
-const CARB_LOADING = { overSeconds: 90 * 60, perKgPerDay: [10, 12] };
-const PRE_MEAL = { perKgPerHour: 1, hours: 3, earlyHours: 2, earlyBefore: "07:00" };
+const GLUCOSE_ONLY_MAX = 60;       // g/h the gut can take from glucose alone
+const CARB_PRODUCT_TYPES = ["gel", "chew", "bar", "drink"];
+const CARB_LOADING = [
+  { over: 90 * 60, upTo: 150 * 60, perKgPerDay: [7, 8], when: "The day before" },
+  { over: 150 * 60, upTo: 240 * 60, perKgPerDay: [8, 10], when: "Each day for the 36 hours before" },
+  { over: 240 * 60, upTo: Infinity, perKgPerDay: [10, 12], when: "Each day for the 36–48 hours before" }
+];
+const KCAL_PER_GRAM_CARB = 4;
+const PRE_MEAL = { perKgLow: 1, perKgPerHour: 1, maxPerKg: 4, defaultHours: 2 };
 const RECOVERY = { carbsPerKgPerHour: [1.0, 1.2], proteinPerKg: 0.3, withinMinutes: 30 };
-const PRE_START_GEL_MINUTES = 15;
+const FEEDS = { preStartMinutes: 15, stepMinutes: 5, stopBeforeFinishMinutes: 20, fallbackGel: { name: "gel", carbs: 22 } };
 
 const roundTo = (value, step) => Math.round(value / step) * step;
 const formatRange = ([low, high], unit) => (low === high ? `${low} ${unit}` : `${low}–${high} ${unit}`);
@@ -996,19 +1010,75 @@ function timeOfDayMinus(time, hours) {
   return `${pad2(Math.floor(minutes / 60))}:${pad2(minutes % 60)}`;
 }
 
-// Carbs during: guidance for the session length, the cap, the target in g/h,
+// Carbs during: guidance for the session length, the caps, the target in g/h,
 // and the hours you can eat in (none on a swim; bike and run in a triathlon)
 function carbPlan(w = workout()) {
   const seconds = workoutSeconds();
   if (!seconds) return null;
   const guidance = CARB_GUIDANCE.find(band => seconds < band.upTo);
+  const carbProducts = settings.products.filter(p => CARB_PRODUCT_TYPES.includes(p.type) && p.carbs > 0);
+  const hasDual = carbProducts.some(p => p.carbType === "dual");
+  const glucoseOnly = carbProducts.length > 0 && carbProducts.every(p => p.carbType === "glucose");
+  // Over 4 hours, 90 g/h needs a glucose + fructose product
+  const bandMax = guidance.maxNeedsDual && !hasDual ? GLUCOSE_ONLY_MAX : guidance.max;
+  const productCap = glucoseOnly ? GLUCOSE_ONLY_MAX : null;
   const cap = gutCarbCap();
-  const target = [guidance.min, guidance.max].map(g => (cap == null ? g : Math.min(g, cap)));
+  const limit = g => Math.min(g, productCap ?? Infinity, cap ?? Infinity);
+  const target = [limit(guidance.min), limit(bandMax)];
   const eatingSeconds = w.type === "swim" ? 0
     : w.type === "triathlon" ? legWindows(w).filter(l => l.leg !== "swim").reduce((t, l) => t + l.end - l.start, 0)
     : seconds;
   const total = target.map(g => roundTo(g * eatingSeconds / 3600, 5));
-  return { seconds, guidance, cap, target, eatingSeconds, total };
+  return { seconds, guidance, bandMax, glucoseOnly, hasDual, cap, target, eatingSeconds, total };
+}
+
+// Carbs an hour from a drink mix in the hydration plan (when it's the mix used)
+function drinkMixCarbsPerHour(w) {
+  const plan = hydrationPlan(w);
+  if (!plan || plan.toThirst || !plan.sodiumMg) return { perHour: 0 };
+  const mixSource = sodiumSources(w, plan).sources.find(s => s.mix && s.product.type === "drink" && s.product.carbs > 0);
+  return mixSource ? { perHour: mixSource.servings * mixSource.product.carbs / plan.hours, source: mixSource } : { perHour: 0 };
+}
+
+// Gel feeds: the first gel or chew in My products (or a 22 g gel), at the top
+// of the capped target less any drink-mix carbs. The first is 15 minutes
+// before the start; then one every interval (the gel's carbs ÷ rate, to the
+// nearest 5 min), stopping when the next would be under 20 minutes from the
+// finish, or the carbs so far are within half a serving of the total. In a
+// triathlon, feeds only go in the bike and run: one that would land in the
+// swim or a transition moves to the start of the next leg.
+function carbFeeds(w = workout(), plan = carbPlan(w)) {
+  const product = settings.products.find(p => ["gel", "chew"].includes(p.type) && p.carbs > 0);
+  const gel = product ? { name: productTitle(product), carbs: product.carbs, product } : FEEDS.fallbackGel;
+  const none = { gel, feeds: [], count: 0, grams: 0, limited: false };
+  if (!plan || plan.target[1] === 0) return none;
+  const preStart = -FEEDS.preStartMinutes * 60;
+  const feeds = [];
+  const add = time => feeds.push({ time, soFar: (feeds.length + 1) * gel.carbs });
+  // Swims: just the one before the start
+  if (w.type === "swim") { add(preStart); return { ...none, feeds, count: 1, grams: gel.carbs }; }
+  const rate = plan.target[1] - drinkMixCarbsPerHour(w).perHour;
+  if (rate <= 0) return none;
+  const interval = Math.max(FEEDS.stepMinutes, roundTo(gel.carbs / rate * 60, FEEDS.stepMinutes)) * 60;
+  const windows = w.type === "triathlon" ? legWindows(w).filter(l => l.leg !== "swim") : [{ start: 0, end: plan.seconds }];
+  const finish = windows[windows.length - 1].end;
+  const total = rate * plan.eatingSeconds / 3600;
+  const max = product?.maxPerDay || Infinity;
+  let limited = false;
+  add(preStart);
+  for (let time = preStart + interval; ; time += interval) {
+    if (feeds.length * gel.carbs >= total - gel.carbs / 2) break;
+    // Outside the bike and run (the swim or a transition): the start of the next leg
+    if (!windows.some(l => time >= l.start && time < l.end)) {
+      const next = windows.find(l => l.start > time);
+      if (!next) break;
+      time = next.start;
+    }
+    if (time > finish - FEEDS.stopBeforeFinishMinutes * 60) break;
+    if (feeds.length >= max) { limited = true; break; }
+    add(time);
+  }
+  return { gel, feeds, count: feeds.length, grams: feeds.length * gel.carbs, limited, max };
 }
 
 const result = key => document.querySelector(`[data-result="${key}"]`);
@@ -1022,7 +1092,7 @@ function renderNutrition(w) {
   const plan = carbPlan(w);
   const weight = fields.weight;
 
-  // During: carbs per hour, total, and the guidance beside the cap
+  // During: carbs per hour, total, and the guidance beside the caps
   if (!plan) {
     ["carbsPerHour", "carbsTotal"].forEach(key => setResult(key, key === "carbsPerHour" ? "– g/h" : "– g", false));
     setResult("carbGuidance", "Add the duration on the Event page", false);
@@ -1033,71 +1103,90 @@ function renderNutrition(w) {
     setResult("carbGuidance", "Fuel before and after instead", false);
     setResult("carbGap", "");
   } else {
-    const { guidance, cap, target, total } = plan;
+    const { guidance, bandMax, glucoseOnly, hasDual, cap, target, total } = plan;
     const none = guidance.max === 0;
     setResult("carbsPerHour", none ? "None needed" : formatRange(target, "g/h"));
     setResult("carbsTotal", none ? "0 g" : formatRange(total, "g"));
-    let text = none ? "None needed under 45 minutes" : `Guidance ${formatRange([guidance.min, guidance.max], "g/h")}`;
+    const parts = [none ? "None needed under 45 minutes" : `Guidance ${formatRange([guidance.min, guidance.max], "g/h")}`];
     if (!none) {
-      text += cap == null ? " · no gut training set, so no cap"
-        : cap < guidance.max ? ` · capped at ${displayNumber(cap, 0)} g/h by your gut training`
-        : ` · within your gut training (${displayNumber(cap, 0)} g/h)`;
+      if (glucoseOnly && guidance.max > GLUCOSE_ONLY_MAX) parts.push(`capped at ${GLUCOSE_ONLY_MAX} g/h: your carb products are glucose only`);
+      else if (guidance.maxNeedsDual && !hasDual) parts.push(`${GLUCOSE_ONLY_MAX} g/h without a glucose + fructose product`);
+      const upper = Math.min(bandMax, glucoseOnly ? GLUCOSE_ONLY_MAX : Infinity);
+      parts.push(cap == null ? "no gut training set, so no cap"
+        : cap < upper ? `capped at ${displayNumber(cap, 0)} g/h by your gut training`
+        : `within your gut training (${displayNumber(cap, 0)} g/h)`);
     }
-    setResult("carbGuidance", text, false);
+    setResult("carbGuidance", parts.join(" · "), false);
     // The gap is what tells you to train your gut
     setResult("carbGap", cap != null && cap < guidance.min
       ? `${displayNumber(guidance.min - cap, 0)} g/h under the guidance. Training your gut would close the gap.` : "");
   }
 
-  // Timeline: a gel before the start, then (for triathlon) each leg with its part
+  // Timeline: gel feeds with a running total, and (for triathlon) each leg with its part
+  const { gel, feeds, count, grams, limited, max } = carbFeeds(w, plan);
+  const rows = feeds.map(({ time, soFar }) => ({ time, what: `1 × ${gel.name}`, detail: `${soFar} g so far` }));
+  legWindows(w).forEach(({ leg, name, start }) => rows.push({ time: start, what: name, detail: LEG_ROLES[leg].nutrition, kind: "leg" }));
+  rows.sort((a, b) => a.time - b.time || (a.kind === "leg" ? -1 : 1)); // a leg heads any feed at its start
   const timeline = result("carbTimeline");
   timeline.textContent = "";
-  const addRow = (seconds, what, detail, kind) => {
+  rows.forEach(({ time, what, detail, kind }) => {
     const item = document.createElement("li");
     item.className = "timeline__item" + (kind ? ` timeline__item--${kind}` : "");
-    const time = document.createElement("span");
-    time.className = "timeline__time";
-    time.textContent = seconds == null ? "–:––" : formatClock(seconds);
+    const clock = document.createElement("span");
+    clock.className = "timeline__time";
+    clock.textContent = formatClock(time);
     const text = document.createElement("span");
     text.className = "timeline__what";
     text.textContent = what;
     if (detail) { const sub = document.createElement("span"); sub.textContent = detail; text.append(sub); }
-    item.append(time, text);
+    item.append(clock, text);
     timeline.append(item);
-  };
-  if (plan && (plan.guidance.max > 0 || w.type === "swim")) {
-    const gel = settings.products.find(product => product.type === "gel");
-    addRow(-PRE_START_GEL_MINUTES * 60, gel ? `1 × ${productTitle(gel)}` : "A gel");
-  }
-  const windows = legWindows(w);
-  if (windows.length) {
-    windows.forEach(({ leg, name, start }) => {
-      addRow(start, name, LEG_ROLES[leg].nutrition, "leg");
-      if (leg !== "swim") addRow(null, "–", null, "placeholder"); // the leg's feeds, to come
-    });
-  } else if (w.type !== "swim") {
-    addRow(null, "–", null, "placeholder");
-    addRow(null, "–", null, "placeholder");
-  }
+  });
+  timeline.closest(".field-group").hidden = rows.length === 0;
+  setResult("timelineNote", !plan ? "Add the duration on the Event page to see when to take what."
+    : rows.length === 0 ? "No gels needed for this one."
+    : `${count} × ${gel.name}, ${grams} g. Times from the start; −0:15 is 15 minutes before.`
+      + (limited ? ` Limited to ${max} a day, the label's maximum.` : "")
+      + (gel.product ? "" : " Add your gels in Settings to use them here."));
+
+  // From your products: servings of the gel (and any drink mix) in this plan
+  const productOutputs = key => document.querySelectorAll(`#view-nutrition [data-result="${key}"]`);
+  document.querySelectorAll('#view-nutrition [data-result^="servings-"]').forEach(el => { el.textContent = "Not in this plan"; el.classList.remove("is-set"); });
+  if (gel.product && count) productOutputs(`servings-${gel.product.id}`).forEach(el => {
+    el.textContent = `${count} serving${count === 1 ? "" : "s"}, ${grams} g`;
+    el.classList.add("is-set");
+  });
+  const drinkMix = plan && w.type !== "swim" ? drinkMixCarbsPerHour(w).source : null;
+  if (drinkMix) productOutputs(`servings-${drinkMix.product.id}`).forEach(el => {
+    el.textContent = `${drinkMix.servings} serving${drinkMix.servings === 1 ? "" : "s"}, ${drinkMix.servings * drinkMix.product.carbs} g, in your bottles`;
+    el.classList.add("is-set");
+  });
 
   // Before and after, by body weight
   document.querySelector("[data-needs-weight]").hidden = weight != null;
   const perKg = values => (weight == null ? null : values.map(v => roundTo(v * weight, 5)));
 
-  // Carb loading: sessions over 90 minutes only, shown per day
-  document.querySelector("[data-carb-loading]").hidden = !(plan && plan.seconds > CARB_LOADING.overSeconds);
-  const loading = perKg(CARB_LOADING.perKgPerDay);
-  setResult("loadPerDay", loading ? formatRange(loading, "g") : "– g", !!loading);
+  // Carb loading: sessions over 90 minutes only, tiered by length, per day with kcal
+  const tier = plan && CARB_LOADING.find(t => plan.seconds > t.over && plan.seconds <= t.upTo);
+  document.querySelector("[data-carb-loading]").hidden = !tier;
+  if (tier) {
+    const loading = perKg(tier.perKgPerDay);
+    setResult("loadPerDay", loading ? formatRange(loading, "g") : "– g", !!loading);
+    setResult("loadKcal", loading ? `${formatRange(loading.map(g => displayNumber(g * KCAL_PER_GRAM_CARB, 0)), "kcal")}` : "");
+    setResult("loadPerKg", formatRange(tier.perKgPerDay, "g/kg"), false);
+    setResult("loadWhen", tier.when, false);
+  }
 
-  // Pre-workout meal: 1 g/kg for each hour before; an early start gets a smaller
-  // meal about 2 hours before
-  const early = w.start && w.start < PRE_MEAL.earlyBefore;
-  const hours = early ? PRE_MEAL.earlyHours : PRE_MEAL.hours;
-  setResult("mealTime", w.start ? timeOfDayMinus(w.start, hours) : `${hours} h before`, !!w.start);
-  const meal = perKg([PRE_MEAL.perKgPerHour * hours]);
-  setResult("mealCarbs", meal ? `${meal[0]} g` : "– g", !!meal);
-  setResult("mealNote", `${hours} hours before the start, at 1 g/kg for each hour (1–4 hours out).`
-    + (early ? " An early start gets a smaller meal about 2 hours before." : "")
+  // Pre-race meal: 1 g/kg, up to 1 g/kg for each hour before (at most 4 g/kg),
+  // the hours before set in Settings
+  const hours = parseFloat(fields.mealHours) || PRE_MEAL.defaultHours;
+  const hoursText = displayNumber(hours, 1);
+  setResult("mealHeading", settings.workoutMode === "race" ? "Pre-race meal" : "Pre-workout meal");
+  setResult("mealTime", w.start ? timeOfDayMinus(w.start, hours) : `${hoursText} h before`, !!w.start);
+  const meal = perKg([PRE_MEAL.perKgLow, Math.min(PRE_MEAL.maxPerKg, hours * PRE_MEAL.perKgPerHour)]);
+  setResult("mealCarbs", meal ? formatRange(meal, "g") : "– g", !!meal);
+  setResult("mealNote", `${hoursText} hours before the start (set in Settings): 1 g/kg, up to 1 g/kg for each hour before.`
+    + (meal && w.type === "run" ? ` Runs: go for the lower end, about ${meal[0]} g.` : "")
     + (w.start ? "" : " Add a start time on the Event page for a clock time."));
 
   // Recovery: stressed when training again within about 8 hours
@@ -1203,18 +1292,23 @@ function formatFluidRange(low, high) {
 }
 const formatMg = mg => `${displayNumber(roundTo(mg, 50), 0)} mg`;
 
-// Where the sodium comes from: gels (as many as the carbs need), a cup of the
-// course drink at each aid station that has it, and the rest from your mix,
-// within its daily limit
-function sodiumSources(w, plan) {
+// Where the sodium comes from: gels (the Nutrition timeline's feeds when given;
+// otherwise an estimate from the carb target, used while working out whether a
+// drink mix supplies carbs), a cup of the course drink at each aid station that
+// has it, and the rest from your mix, within its daily limit
+function sodiumSources(w, plan, feeds = null) {
   const sources = [];
   let remaining = plan.sodiumMg;
-  const carbs = carbPlan(w);
-  const gel = settings.products.find(p => ["gel", "chew"].includes(p.type) && p.carbs > 0);
-  if (gel && carbs && carbs.eatingSeconds) {
-    const grams = (carbs.target[0] + carbs.target[1]) / 2 * carbs.eatingSeconds / 3600;
-    const servings = Math.ceil(grams / gel.carbs);
-    if (servings > 0) sources.push({ product: gel, servings, sodium: servings * (gel.sodium || 0) });
+  if (feeds) {
+    if (feeds.gel.product && feeds.count) sources.push({ product: feeds.gel.product, servings: feeds.count, sodium: feeds.count * (feeds.gel.product.sodium || 0) });
+  } else {
+    const carbs = carbPlan(w);
+    const gel = settings.products.find(p => ["gel", "chew"].includes(p.type) && p.carbs > 0);
+    if (gel && carbs && carbs.eatingSeconds) {
+      const grams = (carbs.target[0] + carbs.target[1]) / 2 * carbs.eatingSeconds / 3600;
+      const servings = Math.ceil(grams / gel.carbs);
+      if (servings > 0) sources.push({ product: gel, servings, sodium: servings * (gel.sodium || 0) });
+    }
   }
   const courseDrink = settings.workoutMode === "race" && settings.products.find(p => p.id === w.courseDrink);
   const cups = courseDrink ? w.aidStations.filter(s => (s.items || []).includes("drink")).length : 0;
@@ -1288,7 +1382,7 @@ function renderHydration(w) {
   }
 
   // Sodium and where it comes from
-  document.querySelectorAll('[data-result^="servings-"]').forEach(el => { el.textContent = "Not in this plan"; el.classList.remove("is-set"); });
+  document.querySelectorAll('#view-hydration [data-result^="servings-"]').forEach(el => { el.textContent = "Not in this plan"; el.classList.remove("is-set"); });
   if (!drinking || plan.sodiumMg === 0) {
     set("sodiumPerHour", swim ? "None during" : plan?.toThirst ? "Not needed" : "– mg/h", false);
     set("sodiumTotal", "–", false);
@@ -1296,7 +1390,7 @@ function renderHydration(w) {
   } else {
     set("sodiumPerHour", `${formatMg(plan.sodiumPerHour)}/h`);
     set("sodiumTotal", formatMg(plan.sodiumMg));
-    const { sources, mix, shortfall, limited } = sodiumSources(w, plan);
+    const { sources, mix, shortfall, limited } = sodiumSources(w, plan, carbFeeds(w)); // gels as placed on the Nutrition timeline
     set("sodiumSources", sources.length ? sources.map(s => `${productTitle(s.product)} ${formatMg(s.sodium)}`).join(" · ") : "Add your products in Settings", sources.length > 0);
     const mixSource = sources.find(s => s.mix);
     if (mixSource && bottlesNeeded) {
@@ -1307,7 +1401,7 @@ function renderHydration(w) {
     else set("mix", mix ? "Water: gels and the course cover it" : "Add a drink mix or tabs in Settings", !!mix);
     set("mixNote", limited ? `Limited to ${mix.maxPerDay} a day, the label's maximum, so you'll be about ${formatMg(shortfall)} short. Add another source, like salt caps or a saltier drink.`
       : shortfall > 0 ? `About ${formatMg(shortfall)} short: add a drink mix or tabs in Settings.` : "");
-    sources.forEach(s => document.querySelectorAll(`[data-result="servings-${s.product.id}"]`).forEach(el => {
+    sources.forEach(s => document.querySelectorAll(`#view-hydration [data-result="servings-${s.product.id}"]`).forEach(el => {
       el.textContent = s.cups ? `${s.cups} cup${s.cups === 1 ? "" : "s"} on the course` : `${s.servings} serving${s.servings === 1 ? "" : "s"}`;
       el.classList.add("is-set");
     }));
@@ -1383,7 +1477,6 @@ function renderPlans() {
     });
   });
 
-  renderNutrition(w);
   document.querySelector("[data-bottle-kit]").textContent = fields.bottleSize && fields.bottleCount
     ? `You carry ${displayNumber(fields.bottleCount, 0)} × ${formatWithUnit("volume", fields.bottleSize)}`
     : "Add your bottles in Settings";
@@ -1412,7 +1505,9 @@ function renderPlans() {
       group.append(row);
     });
   });
-  renderHydration(w); // after the product rows, whose servings it fills in
+  // After the product rows, whose servings they fill in
+  renderNutrition(w);
+  renderHydration(w);
 }
 // "Go to Event" (shown until the Event page has something in it)
 document.querySelectorAll("[data-go-event]").forEach(button =>

@@ -41,10 +41,12 @@ assets/icons/
     sweat-sodium result in mg/L, which overrides them.
   - *Gut training:* the most carbs per hour you're used to, which will cap the
     carb target. Left empty, the plan follows the standard guidance with no cap
-    (`gutCarbCap()` returns null), and the Nutrition page says so.
+    (`gutCarbCap()` returns null), and the Nutrition page says so. Below it,
+    how many hours before the start you eat your pre-race meal (1–4, default 2).
   - *My products:* gels, drink mixes, electrolyte tabs, chews and bars, each
     with carbs, sodium and caffeine per serving (and the water it's mixed
-    with, for drinks and tabs), and an optional daily limit from the label.
+    with, for drinks and tabs), carb type (glucose only or glucose +
+    fructose), and an optional daily limit from the label.
   - *Bottles:* bottle size and how many you carry (e.g. 2 × 750 ml), for the
     number of bottles and refill timings.
   - *Units* (kg, cm or lb, ft in; ml or US fl oz) and *Appearance* (light,
@@ -55,21 +57,34 @@ assets/icons/
     products on their own.
 - **Nutrition and Hydration pages** (first two tabs): display only, for
   whichever workout is selected on the Event page (training or race), with its
-  name, type, time and date under the title. The layout is in place; worked-out
-  values show "–" until the formulas are added (each is an
-  `<output data-result="...">` in `index.html`).
-  - *Nutrition* (worked out, see the constants at the top of `renderNutrition`
+  name on one line and Race / Training, time and date below it. Each worked-out
+  value is an `<output data-result="...">` in `index.html`.
+  - *Nutrition* (worked out, see the constants and comment above `carbPlan`
     in `js/main.js`):
-    - Carbs per hour from the guidance for the session length (none under 45
-      min, up to 30 g/h to 75 min, 30–60 g/h to 2 h, 60–90 g/h beyond),
-      capped by gut training, shown side by side with the gap; total carbs over
-      the time you can eat (none on a swim; bike and run in a triathlon).
-    - Timeline: a gel 15 minutes before the start, then each triathlon leg
-      with its part; the feeds themselves are still placeholders.
-    - Carb loading, for sessions over 90 minutes only: 10–12 g/kg a day for the
-      36–48 hours before, with a note on easy, low-fibre carbs.
-    - Pre-workout meal: 1 g/kg for each hour before the start, 3 hours before
-      (2 hours for starts before 07:00), with an "eat by" time.
+    - Carbs per hour from the guidance for the session length: none under 45
+      min, 0–30 g/h to 75 min, 30–60 g/h to 2 h 30, 60–90 g/h to 4 h, and over
+      4 h 60–90 g/h (90 only with a glucose + fructose product). Capped at 60
+      g/h when every carb product is glucose only, and by gut training; the
+      guidance line shows the caps side by side, with the gap. Total carbs
+      over the time you can eat (none on a swim; bike and run in a triathlon).
+    - Timeline of real feeds: the first gel or chew in My products (or a 22 g
+      gel), at the top of the capped target less any drink-mix carbs in the
+      hydration plan. The first is 15 minutes before the start; then one every
+      carbs ÷ rate (to the nearest 5 min), stopping under 20 minutes from the
+      finish or within half a serving of the total. Triathlon feeds go only
+      in the bike and run (one due in the swim moves to the bike start). Each
+      row has a running total; the product's daily limit is respected.
+      Example: a 2:06:36 run at a 30 g/h cap with a 22 g gel gives −0:15,
+      0:30 and 1:15, 3 gels, 66 g.
+    - "From your products" shows servings from the timeline (e.g. "3
+      servings, 66 g"); anything unused says "Not in this plan".
+    - Carb loading, per day with kcal: 7–8 g/kg the day before (90 min–2 h 30),
+      8–10 g/kg a day for 36 hours (2 h 30–4 h), 10–12 g/kg a day for 36–48
+      hours (over 4 h).
+    - Pre-race meal: 1 g/kg up to 1 g/kg for each hour before (at most 4
+      g/kg), eaten the hours before set in Settings (default 2); runs go for
+      the lower end. E.g. 103 kg, 1.5 h before a 09:30 start: eat by 08:00,
+      105–155 g.
     - Recovery: 1.0–1.2 g/kg of carbs an hour and about 0.3 g/kg of protein,
       stressed ("within 30 min") only when training again within 8 hours.
   - *Hydration* (worked out, see the constants above `renderHydration` in
@@ -130,7 +145,6 @@ assets/icons/
 
 ## Still to do
 
-- **The timeline's individual feeds** (when to take each gel or drink).
 - **Distance and temperature units** are km and °C only for now.
 
 Every app on `louistucker31.github.io` shares one localStorage and one set of
