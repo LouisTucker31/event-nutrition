@@ -51,9 +51,6 @@ assets/icons/
    view ids (`view-page1`…) with `VIEWS` in `js/main.js`, keeping the same
    order as the tabs. The tab icons are the triathlon app's (bag, checklist,
    calendar) as placeholders; swap them for Material Symbols Rounded.
-4. **Icon.** `assets/icons/icon.svg` and the PNGs are the series background
-   with no symbol yet. Add the symbol to the SVG, then regenerate
-   `icon-192.png`, `icon-512.png` and `apple-touch-icon.png` (180 × 180) from it.
 
 After changing any file, bump `VERSION` in `sw.js` if you want installed copies
 to drop their old cache straight away (they update on next launch either way).
