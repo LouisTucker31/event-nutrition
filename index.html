@@ -102,16 +102,19 @@
     <p class="settings-note plan-empty" data-plan-empty hidden>Fill in the Event page to see your plan. <button type="button" class="text-button text-button--accent" data-go-event>Go to Event</button></p>
 
     <h2 class="settings-heading">During</h2>
-    <p class="settings-note plan-swim-note" data-swim-plan-note hidden>You can't eat or drink mid-swim, so fuelling moves to before and after, or to feed stations on long open-water swims.</p>
+    <p class="settings-note plan-swim-note" data-hydration-swim-note hidden>You can't drink mid-swim, so the fluid plan moves to before and after the session.</p>
     <h3 class="settings-subheading">Fluid</h3>
     <div class="field-group">
       <div class="field-row">
-        <div class="field computed-field computed-field--hero"><span id="fluidHourLabel">Per hour</span><output data-result="fluidPerHour" aria-labelledby="fluidHourLabel">– <span data-unit-label="volume"></span>/h</output></div>
+        <div class="field computed-field computed-field--hero"><span id="fluidHourLabel">Drink per hour</span><output data-result="fluidPerHour" aria-labelledby="fluidHourLabel">– <span data-unit-label="volume"></span>/h</output></div>
         <div class="field computed-field computed-field--hero"><span id="fluidTotalLabel">Total</span><output data-result="fluidTotal" aria-labelledby="fluidTotalLabel">– <span data-unit-label="volume"></span></output></div>
       </div>
+      <div class="field computed-field"><span id="sweatEstimateLabel">You'll sweat about</span><output data-result="sweatEstimate" aria-labelledby="sweatEstimateLabel">–</output><span class="computed-field__detail" data-result="sweatBasis"></span></div>
       <div class="field computed-field"><span id="bottlesLabel">Bottles</span><output data-result="bottles" aria-labelledby="bottlesLabel">–</output><span class="computed-field__detail" data-bottle-kit></span></div>
+      <div class="field computed-field"><span id="weightLossLabel">Expected weight loss</span><output data-result="weightLoss" aria-labelledby="weightLossLabel">–</output><span class="computed-field__detail" data-result="weightLossNote"></span></div>
     </div>
-    <p class="settings-note">Capped at a safe maximum. In sessions under an hour, drink to thirst.</p>
+    <p class="plan-warning" data-result="fluidWarning" hidden></p>
+    <p class="settings-note">About 75% of your sweat, never more than 1 L an hour. In sessions under an hour, drink to thirst. Drinking more than you sweat, or over about 1 L an hour, risks low blood sodium.</p>
 
     <!-- Triathlon: each leg's time window and its part in the plan (LEG_ROLES in main.js) -->
     <div data-leg-plan-wrap hidden>
@@ -125,30 +128,35 @@
         <div class="field computed-field computed-field--hero"><span id="sodiumHourLabel">Sodium per hour</span><output data-result="sodiumPerHour" aria-labelledby="sodiumHourLabel">– mg/h</output></div>
         <div class="field computed-field computed-field--hero"><span id="sodiumTotalLabel">Total sodium</span><output data-result="sodiumTotal" aria-labelledby="sodiumTotalLabel">– mg</output></div>
       </div>
-      <div class="field computed-field"><span id="mixLabel">What to mix</span><output data-result="mix" aria-labelledby="mixLabel">–</output></div>
+      <div class="field computed-field"><span id="mixLabel">What to mix</span><output data-result="mix" aria-labelledby="mixLabel">–</output><span class="computed-field__detail" data-result="mixNote"></span></div>
+      <div class="field computed-field"><span id="sodiumSourcesLabel">Where it comes from</span><output data-result="sodiumSources" aria-labelledby="sodiumSourcesLabel">–</output></div>
     </div>
-    <p class="settings-note">From how much you drink and how salty your sweat is (<span data-salt-band>not set</span>).</p>
+    <p class="settings-note">What you drink × how salty your sweat is (<span data-salt-band>not set</span>), not your whole sweat loss: you can't replace all of it. Gels, your mix and course drinks all count.</p>
 
     <h3 class="settings-subheading">From your products</h3>
     <div class="field-group" data-product-totals="drink tab"></div>
     <p class="settings-note" data-products-empty hidden>Add your drink mixes and electrolyte tabs in Settings, under My products.</p>
 
     <h2 class="settings-heading">Before</h2>
-    <h3 class="settings-subheading">Pre-loading</h3>
-    <div class="field-group">
-      <div class="field-row">
-        <div class="field computed-field"><span id="preloadSodiumLabel">Sodium</span><output data-result="preloadSodium" aria-labelledby="preloadSodiumLabel">– mg</output></div>
-        <div class="field computed-field"><span id="preloadFluidLabel">With</span><output data-result="preloadFluid" aria-labelledby="preloadFluidLabel">– <span data-unit-label="volume"></span></output></div>
+    <!-- Pre-loading only when it applies: hot, over about 2 hours, or a high saltiness band -->
+    <div data-preload hidden>
+      <h3 class="settings-subheading">Pre-loading</h3>
+      <div class="field-group">
+        <div class="field-row">
+          <div class="field computed-field"><span id="preloadSodiumLabel">Sodium</span><output data-result="preloadSodium" aria-labelledby="preloadSodiumLabel">1,500 mg</output></div>
+          <div class="field computed-field"><span id="preloadFluidLabel">In</span><output data-result="preloadFluid" aria-labelledby="preloadFluidLabel">–</output></div>
+        </div>
+        <div class="field computed-field"><span id="preloadWhenLabel">Finish by</span><output data-result="preloadWhen" aria-labelledby="preloadWhenLabel">–</output></div>
       </div>
-      <div class="field computed-field"><span id="preloadWhenLabel">When</span><output data-result="preloadWhen" aria-labelledby="preloadWhenLabel">–</output></div>
+      <p class="settings-note" data-result="preloadWhy"></p>
     </div>
-    <p class="settings-note">For hot or long events.</p>
+    <p class="settings-note" data-no-preload>No pre-loading needed: it's for hot events, ones over about 2 hours, or salty sweaters. Drink normally beforehand.</p>
 
     <h2 class="settings-heading">After</h2>
     <div class="field-group">
-      <div class="field computed-field computed-field--hero"><span id="rehydrateLabel">Rehydrate with</span><output data-result="rehydrate" aria-labelledby="rehydrateLabel">– <span data-unit-label="volume"></span></output></div>
+      <div class="field computed-field computed-field--hero"><span id="rehydrateLabel">Rehydrate with</span><output data-result="rehydrate" aria-labelledby="rehydrateLabel">–</output></div>
     </div>
-    <p class="settings-note">About 1.25–1.5 L for every kg you lose.</p>
+    <p class="settings-note" data-result="rehydrateNote">About 1.25–1.5 L for every kg you lose.</p>
 
     <p class="plan-disclaimer">These are starting points to test in training, not medical advice.</p>
   </section>
@@ -576,6 +584,7 @@
                 <label class="field"><span>Sodium<span class="sr-only"> per serving in milligrams</span></span><span class="unit-field"><input data-product-key="sodium" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">mg</span></span></label>
                 <label class="field"><span>Caffeine<span class="sr-only"> per serving in milligrams</span></span><span class="unit-field"><input data-product-key="caffeine" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">mg</span></span></label>
               </div>
+              <label class="field"><span>Max per day (optional)</span><span class="unit-field"><input data-product-key="maxPerDay" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="From the label, e.g. 4" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">servings</span></span></label>
             </div>
             <div class="product__footer">
               <p class="settings-note">Per serving: one gel, sachet, tab, bar or pack of chews.</p>

@@ -72,9 +72,23 @@ assets/icons/
       (2 hours for starts before 07:00), with an "eat by" time.
     - Recovery: 1.0–1.2 g/kg of carbs an hour and about 0.3 g/kg of protein,
       stressed ("within 30 min") only when training again within 8 hours.
-  - *Hydration:* fluid per hour and in total, bottles, sodium per hour and in
-    total, what to mix, servings of your drinks and tabs; pre-loading before,
-    and how much to drink after.
+  - *Hydration* (worked out, see the constants above `renderHydration` in
+    `js/main.js`):
+    - Sweat rate for the event: your measured rate or sweat level, scaled for
+      temperature, humidity, indoors, effort and sport (`SWEAT_SCALING`: these
+      factors are starting assumptions, not from a source).
+    - Drink about 75% of it, never over 1 L an hour; under an hour, drink to
+      thirst. A warning shows when the cap is reached (low blood sodium risk).
+    - Expected weight loss (sweat minus drink) as a % of body weight, with a
+      warning over 3%; it sets "Rehydrate with" (1.25–1.5 L per kg lost).
+    - Sodium = what you drink × your sweat saltiness (PF&H), from gels, a cup
+      (150 ml) of course drink at each aid station that has it, then your tab
+      or drink mix, within its daily limit (with the shortfall if it's hit).
+    - Bottles needed and refills from your bottle size and count; how much mix
+      in each bottle.
+    - Pre-loading (1,500 mg sodium in 500 ml, finished 90 minutes before) only
+      when hot (25 °C and over), over 2 hours, or a salty sweater.
+    - Swims: the fluid plan moves to before and after.
   - Triathlons show each leg's time window and its part in the plan: nothing on
     the swim, most carbs and fluid on the bike, gels and sips on the run
     (`legWindows()`, `LEG_ROLES`). Swims note that fuelling moves to before and after.
@@ -116,7 +130,7 @@ assets/icons/
 
 ## Still to do
 
-- **Formulas** for the Hydration values, and the timeline's feeds and product servings.
+- **The timeline's individual feeds** (when to take each gel or drink).
 - **Distance and temperature units** are km and °C only for now.
 
 Every app on `louistucker31.github.io` shares one localStorage and one set of

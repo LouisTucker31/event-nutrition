@@ -5,7 +5,7 @@
   --done-border: #e6c0b3; --done-head: #f9efeb;
   --bar: #eee; --check: var(--accent);
   --field: #ffffff; --seg-bg: #efeff0; --seg-on: #ffffff;
-  --focus: var(--accent); --danger: #d70015; --on-danger: #fff;
+  --focus: var(--accent); --danger: #d70015; --on-danger: #fff; --danger-soft: #fdecee;
   /* Accent: clay (terracotta), used only for progress, completion and selection.
      --accent is deep enough for text and icons (5.7:1 on white); --accent-soft
      is for fills; the gradient runs soft to deep, for progress.
@@ -27,7 +27,7 @@
   --done-border: #5e392c; --done-head: #261712;
   --bar: #2c2c2e; --check: var(--accent);
   --field: #1c1c1e; --seg-bg: #1c1c1e; --seg-on: #3a3a3c;
-  --focus: var(--accent); --danger: #ff6961; --on-danger: #000;
+  --focus: var(--accent); --danger: #ff6961; --on-danger: #000; --danger-soft: rgba(255, 105, 97, 0.14);
   --accent: #e9b7a5; --accent-soft: rgba(233, 183, 165, 0.14);  /* 11:1 on --bg */
   --accent-gradient: linear-gradient(90deg, #9c5840, #e9b7a5);
 }
@@ -166,6 +166,10 @@ input, textarea { caret-color: var(--accent); }   /* an accent-coloured text cur
 .timeline__item--leg .timeline__what span { display: block; font-weight: 400; font-size: 0.85rem; color: var(--muted-2); }
 .timeline__item--placeholder { color: var(--faint); }
 .plan-swim-note { margin: 0 4px 8px; }
+/* Safety warnings on the plan (drinking too much, losing too much weight) */
+.plan-warning { margin: 8px 0 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--danger-soft); color: var(--text); font-size: 0.85rem; }
+.plan-warning[hidden] { display: none; }
+.plan-warning strong { color: var(--danger); }
 .check-item__hint { display: block; font-size: 0.8rem; color: var(--muted-2); margin-top: 2px; }
 .plan-disclaimer { font-size: 0.8rem; color: var(--muted-2); margin: 24px 4px 0; text-align: center; }
 
