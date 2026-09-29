@@ -1,0 +1,385 @@
+:root {
+  color-scheme: light;
+  --bg: #ffffff; --text: #1a1a1a; --muted: #555; --muted-2: #666; --faint: #707070;
+  --border: #e3e3e3; --line: #f0f0f0; --head: #fafafa;
+  --done-border: #b7dcc6; --done-head: #eef7f1;
+  --bar: #eee; --check: var(--accent);
+  --field: #ffffff; --seg-bg: #efeff0; --seg-on: #ffffff;
+  --focus: var(--accent); --danger: #d70015; --on-danger: #fff;
+  /* Accent: sage green, used only for progress, completion and selection.
+     --accent is deep enough for text and icons (5.7:1 on white); --accent-soft
+     is for fills; the gradient runs soft to deep, for progress. */
+  --accent: #2a7350; --accent-soft: #e3f2e9;
+  --accent-gradient: linear-gradient(90deg, #9fd4b6, #2a7350);
+
+  --radius-sm: 8px;
+  --radius: 10px;
+  --gutter: 16px;        /* side padding inside lists, fields and buttons */
+  --input-size: 16px;    /* text boxes stay at 16px or more so iPhone never zooms in */
+  --nav-clearance: calc(var(--lg-nav-height) + var(--lg-nav-bottom));
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b0b0c; --text: #f2f2f7; --muted: #a1a1a6; --muted-2: #8e8e93; --faint: #8e8e93;
+  --border: #2c2c2e; --line: #242426; --head: #1c1c1e;
+  --done-border: #2d5a44; --done-head: #12251b;
+  --bar: #2c2c2e; --check: var(--accent);
+  --field: #1c1c1e; --seg-bg: #1c1c1e; --seg-on: #3a3a3c;
+  --focus: var(--accent); --danger: #ff6961; --on-danger: #000;
+  --accent: #8fd1ab; --accent-soft: rgba(143, 209, 171, 0.14);
+  --accent-gradient: linear-gradient(90deg, #3d8a63, #8fd1ab);
+}
+html, body { background: var(--bg) !important; min-height: 100%; }
+/* Follow the iPhone's text size setting (Dynamic Type) */
+@supports (font: -apple-system-body) { html { font: -apple-system-body; } }
+/* Keep focused items clear of the floating nav; hide the scrollbar */
+html { scroll-padding-bottom: calc(var(--nav-clearance) + 12px); scrollbar-width: none; }
+html::-webkit-scrollbar { display: none; }
+/* Covers iOS overscroll so the page colour never shows white behind dark mode */
+body::before { content: ""; position: fixed; inset: 0; background: var(--bg); z-index: -1; }
+.page { background: var(--bg); min-height: 100vh; position: relative; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.4;
+}
+.views { max-width: 720px; margin: 0 auto; padding: 24px 16px calc(var(--nav-clearance) + 8px); }
+.view[hidden] { display: none; }
+h1 { font-size: 1.7rem; margin: 0 0 4px; }
+h1:focus { outline: none; } /* focused only to announce the view change */
+.view--has-button h1 { padding-right: 56px; }  /* clear of the round settings button */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Stop double-tap zoom */
+html { touch-action: manipulation; }
+
+input, select, textarea { font-size: max(var(--input-size), 1em) !important; }
+input, textarea { caret-color: var(--accent); }   /* a green text cursor, as iOS tints it */
+
+/* Shared form styles for the series: headed groups of fields, as in the
+   triathlon app's Events and Settings pages. Unused until pages get content. */
+.settings-heading { font-size: 0.9rem; font-weight: 600;
+             color: var(--muted-2); margin: 24px 4px 8px; }
+.settings-heading:first-of-type { margin-top: 16px; }
+.field-group { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--field); }
+.field { display: block; padding: 8px var(--gutter) 12px; border-bottom: 1px solid var(--line); }
+.field:last-child { border-bottom: 0; }
+.field > span, .field > label { display: block; font-size: 0.8rem; color: var(--muted-2); margin-bottom: 4px; }
+.field input, .field select, .field textarea {
+  display: block; width: 100%; min-height: 26px; margin: 0; padding: 0; border: 0; outline: 0;
+  background: transparent; color: var(--text); font: inherit; font-size: max(var(--input-size), 1rem);
+  -webkit-appearance: none; appearance: none; border-radius: 0;
+}
+.field input::placeholder, .field textarea::placeholder { color: var(--faint); }
+/* iOS Safari centres date/time values by default */
+.field input[type="date"], .field input[type="time"] { text-align: left; }
+.field input::-webkit-date-and-time-value { text-align: left; margin: 0; }
+.field select { background-image: linear-gradient(45deg, transparent 50%, var(--muted-2) 50%), linear-gradient(135deg, var(--muted-2) 50%, transparent 50%);
+  background-position: calc(100% - 10px) 55%, calc(100% - 5px) 55%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 20px; }
+.field textarea { resize: vertical; min-height: 60px; }
+/* The box you're typing in gets a faint background; the blue outline shows only
+   for keyboard users (main.js sets .using-keyboard after Tab is pressed) */
+.field:focus-within { background: var(--head); }
+.using-keyboard .field:focus-within { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+/* Rows of fields share the width equally; hidden fields drop out, and
+   dividers are drawn only between visible fields */
+.field-row { display: flex; border-bottom: 1px solid var(--line); }
+.field-row > .field { flex: 1 1 0; min-width: 0; border-bottom: 0; }
+.field-row > .field:not([hidden]) ~ .field:not([hidden]) { border-left: 1px solid var(--line); }
+.field-row[hidden], .field[hidden] { display: none; }
+.field-group > .field-row:last-child,
+.field-group > .is-last-visible { border-bottom: 0; }  /* for groups whose later rows are hidden */
+.segmented { display: flex; gap: 4px; padding: 4px; border-radius: var(--radius); background: var(--seg-bg); border: 1px solid var(--border); }
+.segmented button {
+  flex: 1; border: 0; background: none; padding: 8px; border-radius: var(--radius-sm); cursor: pointer;
+  font: inherit; font-size: 0.95rem; color: var(--text); -webkit-tap-highlight-color: transparent;
+}
+.segmented button[aria-pressed="true"] { background: var(--seg-on); color: var(--accent); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.18); }
+.settings-note { font-size: 0.8rem; color: var(--faint); margin: 8px 4px 0; }
+.save-note { font-size: 0.8rem; color: var(--muted-2); margin: 16px 4px 0; text-align: center; }
+.segmented button:focus-visible { outline-offset: -2px; }
+.button-danger {
+  display: block; width: 100%; padding: 12px var(--gutter); border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--field); color: var(--danger); font: inherit; font-weight: 600; cursor: pointer;
+}
+
+/* Settings pop-up: full screen, over the nav, scrolls on its own */
+.settings-sheet {
+  position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;
+  margin: 0; padding: 0; border: 0;
+  background: var(--bg); color: var(--text);
+  overflow-y: auto; overscroll-behavior: contain;
+}
+.settings-sheet::backdrop { background: var(--bg); }
+.settings-sheet__content { max-width: 720px; margin: 0 auto; padding: 24px 16px calc(env(safe-area-inset-bottom, 0px) + 32px); }  /* same top as the pages */
+html:has(.settings-sheet[open]) { overflow: hidden; }  /* stop the page behind scrolling */
+
+/* Small confirmation pop-up (e.g. a reset) */
+.confirm {
+  width: min(340px, calc(100% - 32px)); padding: 20px; border: 1px solid var(--border); border-radius: 14px;
+  background: var(--field); color: var(--text);
+}
+.confirm::backdrop { background: rgba(0, 0, 0, 0.45); }
+.confirm h2 { font-size: 1.1rem; margin: 0 0 8px; }
+.confirm h2:focus { outline: none; }  /* focused on open so no button shows a focus ring */
+.confirm p { margin: 0 0 16px; color: var(--muted); }
+.confirm__actions { display: flex; gap: 8px; }
+.confirm__actions button {
+  flex: 1; min-height: 44px; padding: 8px 12px; border-radius: var(--radius); font: inherit; font-weight: 600; cursor: pointer;
+}
+.confirm__cancel { border: 1px solid var(--border); background: var(--seg-bg); color: var(--text); }
+.confirm__ok { border: 0; background: var(--danger); color: var(--on-danger); }
+.confirm__primary { border: 0; background: var(--text); color: var(--bg); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* Floating tab bar, styled to match the iOS 26 Files app: a 62px glass pill
+   sized to its ~86px tabs, 5px bubble inset, 10px labels. Behaviour is in
+   js/liquid-glass-nav.js.
+
+   Glass layers, bottom to top, on any .lg-surface element:
+     .lg-surface__lens   light blur (real refraction in Chrome/Edge)
+     .lg-surface__frost  light frost and tint, with a 3px soft edge
+     ::after             rim light and specular highlight
+     then the content */
+:root {
+  /* Tuned to Apple's Files tab bar: mostly clear glass, light blur, strong
+     colour pick-up from behind, and a crisp bright rim */
+  --lg-lens-blur: 1px;
+  --lg-lens-tint: rgba(255, 255, 255, 0.1);
+  --lg-frost-blur: 5px;
+  --lg-frost-tint: rgba(255, 255, 255, 0.4);
+  --lg-frost-brightness: 1.06;
+  --lg-saturate: 180%;
+  --lg-lip: 3px;                                  /* soft clear edge */
+  --lg-rim-top: rgba(255, 255, 255, 1);
+  --lg-rim-bottom: rgba(255, 255, 255, 0.85);
+  --lg-rim-side: rgba(255, 255, 255, 0.8);
+  --lg-rim-glow: rgba(255, 255, 255, 0.35);
+  --lg-specular: rgba(255, 255, 255, 0.45);
+  --lg-outline: rgba(0, 0, 0, 0.07);
+  --lg-shadow: 0 6px 24px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  --lg-ink: #000;
+  --lg-accent: var(--accent);
+  --lg-active: var(--lg-ink);   /* the current tab: marked by the grey bubble, not the accent */
+  --lg-bubble: rgba(0, 0, 0, 0.08);
+  --lg-bubble-rim: rgba(255, 255, 255, 0.7);
+  --lg-edge-light: rgba(255, 255, 255, 0.95);    /* 1px lit edge, top-left */
+  --lg-distortion: url(#lg-distortion);          /* SVG filter in index.html */
+  --lg-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", system-ui, "Helvetica Neue", Arial, sans-serif;
+}
+:root[data-theme="dark"] {
+  --lg-lens-tint: rgba(120, 120, 128, 0.06);
+  --lg-frost-tint: rgba(60, 60, 66, 0.34);
+  --lg-frost-brightness: 1;
+  --lg-rim-top: rgba(255, 255, 255, 0.6);
+  --lg-rim-bottom: rgba(255, 255, 255, 0.35);
+  --lg-rim-side: rgba(255, 255, 255, 0.25);
+  --lg-rim-glow: rgba(255, 255, 255, 0.12);
+  --lg-specular: rgba(255, 255, 255, 0.16);
+  --lg-outline: rgba(0, 0, 0, 0.5);
+  --lg-shadow: 0 6px 24px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+  --lg-ink: #fff;
+  --lg-accent: var(--accent);
+  --lg-active: var(--lg-ink);
+  --lg-bubble: rgba(255, 255, 255, 0.14);
+  --lg-bubble-rim: rgba(255, 255, 255, 0.18);
+  --lg-edge-light: rgba(255, 255, 255, 0.45);
+}
+
+/* :where() keeps this at zero specificity, so .lg-nav's position: fixed always wins */
+:where(.lg-surface) {
+  position: relative;
+  isolation: isolate;
+  border-radius: 999px;
+  /* outer shadow lives here, never on the glass layers (breaks Chrome refraction) */
+  box-shadow: 0 0 0 0.5px var(--lg-outline), var(--lg-shadow);
+}
+.lg-surface__lens,
+.lg-surface__frost {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.lg-surface__lens {
+  z-index: 0;
+  background: var(--lg-lens-tint);
+  -webkit-backdrop-filter: blur(var(--lg-lens-blur)) saturate(var(--lg-saturate));
+  backdrop-filter: blur(var(--lg-lens-blur)) saturate(var(--lg-saturate));
+}
+.lg-surface__frost {
+  z-index: 1;
+  background: var(--lg-frost-tint);
+  -webkit-backdrop-filter: blur(var(--lg-frost-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-frost-brightness));
+  backdrop-filter: blur(var(--lg-frost-blur)) saturate(var(--lg-saturate)) brightness(var(--lg-frost-brightness));
+  -webkit-mask:
+    linear-gradient(to right, transparent 0, #000 var(--lg-lip), #000 calc(100% - var(--lg-lip)), transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 var(--lg-lip), #000 calc(100% - var(--lg-lip)), transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask:
+    linear-gradient(to right, transparent 0, #000 var(--lg-lip), #000 calc(100% - var(--lg-lip)), transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 var(--lg-lip), #000 calc(100% - var(--lg-lip)), transparent 100%);
+  mask-composite: intersect;
+}
+/* Liquid distortion on both glass layers (off with Reduce Transparency) */
+.lg-surface__lens,
+.lg-surface__frost { filter: var(--lg-distortion); }
+.lg-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 1px 1px 0 var(--lg-edge-light),
+    inset 0 1px 0.5px var(--lg-rim-top),
+    inset 0 -1px 0.5px var(--lg-rim-bottom),
+    inset 1px 0 0.5px var(--lg-rim-side),
+    inset -1px 0 0.5px var(--lg-rim-side),
+    inset 0 0 10px 0 var(--lg-rim-glow);
+  background:
+    radial-gradient(50% 120% at 8% 0%, var(--lg-specular), transparent 55%),
+    radial-gradient(45% 110% at 95% 100%, var(--lg-specular), transparent 60%);
+  opacity: 0.9;
+}
+:where(.lg-surface > :not(.lg-surface__lens, .lg-surface__frost)) { position: relative; z-index: 3; }
+.lg--refract .lg-surface__lens,
+.lg--refract.lg-surface > .lg-surface__lens { background: transparent; }
+
+@media (prefers-reduced-transparency: reduce) {
+  :root { --lg-frost-tint: rgba(246, 246, 248, 0.97); --lg-distortion: none; }
+  :root[data-theme="dark"] { --lg-frost-tint: rgba(28, 28, 30, 0.97); }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .lg-surface__frost { background: rgba(246, 246, 248, 0.96); -webkit-mask: none; mask: none; }
+  :root[data-theme="dark"] .lg-surface__frost { background: rgba(28, 28, 30, 0.96); }
+}
+
+:root {
+  --lg-nav-height: 62px;
+  --lg-tab-width: 86px;
+  --lg-nav-pad-x: 7px;            /* pill edge to first tab */
+  --lg-nav-bubble-inset: 5px;     /* bubble gap from top/bottom */
+  --lg-nav-bubble-overhang: 3px;  /* bubble a touch wider than its tab */
+  --lg-nav-gutter: 16px;
+  --lg-nav-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) - 12px));  /* 22pt on iPhone, as in Files */
+}
+
+.lg-nav {
+  position: fixed;
+  z-index: 100;
+  left: 0;
+  right: 0;
+  bottom: var(--lg-nav-bottom);
+  margin-inline: auto;
+  width: fit-content;
+  max-width: calc(100% - var(--lg-nav-gutter) * 2);
+  height: var(--lg-nav-height);
+  font-family: var(--lg-font);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.lg-nav.is-pressed { transform: scale(1.025); }
+
+.lg-nav__items {
+  display: flex;
+  height: 100%;
+  padding: 0 var(--lg-nav-pad-x);
+}
+.lg-nav__indicator {
+  position: absolute;
+  top: var(--lg-nav-bubble-inset);
+  bottom: var(--lg-nav-bubble-inset);
+  left: 0;
+  width: 0;
+  border-radius: 999px;
+  background: var(--lg-bubble);
+  box-shadow: inset 0 1px 0.5px var(--lg-bubble-rim), inset 0 -0.5px 0.5px var(--lg-bubble-rim);
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.35, 0.64, 1),
+    width 0.5s cubic-bezier(0.34, 1.35, 0.64, 1);
+  pointer-events: none;
+}
+.lg-nav__indicator.no-anim { transition: none; }
+
+.lg-nav__item {
+  position: relative;
+  flex: 0 1 auto;
+  width: var(--lg-tab-width);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 0 1px;
+  color: var(--lg-ink);
+  font: 510 clamp(10px, 0.625rem, 15px)/1.2 var(--lg-font);
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.lg-nav__icon { display: grid; place-items: center; width: 30px; height: 27px; }
+.lg-nav__icon svg {
+  width: 30px;
+  height: 30px;
+  fill: currentColor;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.lg-nav__item:active .lg-nav__icon svg { transform: scale(0.86); }
+.lg-nav__item.is-active { color: var(--lg-active); }
+.lg-nav__item:focus-visible { outline: 2px solid var(--lg-accent); outline-offset: -4px; border-radius: 999px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-nav, .lg-nav__indicator, .lg-nav__icon svg { transition: none; }
+}
+
+/* nav buttons: reset default button styling */
+button.lg-nav__item { border: 0; background: none; margin: 0; -webkit-appearance: none; appearance: none; }
+
+/* Holds the SVG distortion filter; takes no space */
+.lg-filters { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* Round glass button (settings), top right of the tab pages.
+   Same glass layers, distortion and lit edge as the tab bar. */
+.lg-button {
+  position: fixed;
+  z-index: 100;
+  top: calc(env(safe-area-inset-top, 0px) + 20px);
+  right: max(16px, calc((100vw - 720px) / 2 + 16px));  /* lines up with the page column */
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--lg-ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.lg-button[hidden] { display: none; }
+/* The settings button sits in the page and scrolls away with the title */
+.lg-button--in-page { position: absolute; }
+.lg-button.is-pressed { transform: scale(1.08); }
+.lg-button:focus-visible { outline: 2px solid var(--lg-accent); outline-offset: 2px; }
+.lg-button__icon { display: grid; place-items: center; }
+.lg-button__icon svg { width: 24px; height: 24px; fill: currentColor; }
+@media (prefers-reduced-motion: reduce) {
+  .lg-button { transition: none; }
+}
