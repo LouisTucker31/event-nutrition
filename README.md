@@ -49,7 +49,7 @@ assets/icons/
     time, distances, elevation, and paces worked out from the goal times. It
     only reads Race Ready's data.
   - *Workout:* training or race, name, type (run, bike, swim, triathlon,
-    strength, HYROX, BJJ/MMA, other), date and start time.
+    other), date and start time.
   - *Intensity:* easy, steady, tempo, race pace or intervals. The interval
     builder (warm-up, reps × work and rest, cool-down) works out the total time
     and a time-weighted overall intensity.

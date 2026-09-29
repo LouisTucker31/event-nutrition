@@ -65,9 +65,6 @@
           <option value="bike">Bike</option>
           <option value="swim">Swim</option>
           <option value="triathlon">Triathlon</option>
-          <option value="strength">Strength</option>
-          <option value="hyrox">HYROX</option>
-          <option value="combat">BJJ / MMA</option>
           <option value="other">Other</option>
         </select>
       </label>
@@ -127,7 +124,7 @@
     </div>
     <div class="field-group spaced" id="durationGroup">
       <!-- Time: one box, or one per leg for triathlon -->
-      <label class="field" data-types="run bike swim strength hyrox combat other" data-set-by="time" data-intervals="no"><span>Duration</span><input data-workout-key="duration" data-format="duration" type="text" inputmode="numeric" placeholder="0:00:00" autocomplete="off" aria-describedby="durationHint"></label>
+      <label class="field" data-types="run bike swim other" data-set-by="time" data-intervals="no"><span>Duration</span><input data-workout-key="duration" data-format="duration" type="text" inputmode="numeric" placeholder="0:00:00" autocomplete="off" aria-describedby="durationHint"></label>
       <div class="field-row" data-types="triathlon" data-set-by="time" data-intervals="no">
         <label class="field"><span>Swim</span><input data-workout-key="swimTime" data-format="duration" type="text" inputmode="numeric" placeholder="0:00:00" autocomplete="off" aria-describedby="durationHint"></label>
         <label class="field"><span>Bike</span><input data-workout-key="bikeTime" data-format="duration" type="text" inputmode="numeric" placeholder="0:00:00" autocomplete="off" aria-describedby="durationHint"></label>

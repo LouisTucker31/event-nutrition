@@ -460,6 +460,8 @@ document.getElementById("resetConfirm").addEventListener("click", () => {
 const WORKOUT_DEFAULTS = { type: "run", event: "training", setBy: "time", intensity: "steady",
   workIntensity: "tempo", environment: "outdoor" };
 settings.workout = { ...WORKOUT_DEFAULTS, aidStations: [], ...settings.workout };
+// Strength, HYROX and BJJ / MMA were removed as types: those workouts become Other
+if (["strength", "hyrox", "combat"].includes(settings.workout.type)) { settings.workout.type = "other"; saveSettings(); }
 const workout = () => settings.workout;
 const workoutView = document.getElementById("view-workout");
 const workoutInputs = [...workoutView.querySelectorAll("[data-workout-key]")];
