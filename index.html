@@ -146,31 +146,34 @@
 
       <!-- One card per product, copied from this template by main.js -->
       <template id="productTemplate">
-        <div class="product">
-          <div class="product__heading">
-            <h3 class="settings-subheading product__title"></h3>
-            <button type="button" class="text-button text-button--danger product__remove">Remove</button>
-          </div>
-          <div class="field-group">
-            <label class="field"><span>Name</span><input data-product-key="name" type="text" autocapitalize="words" placeholder="e.g. PF 30 Gel" autocomplete="off"></label>
-            <label class="field"><span>Type</span>
-              <select data-product-key="type">
-                <option value="gel">Gel</option>
-                <option value="drink">Drink mix</option>
-                <option value="tab">Electrolyte tab</option>
-                <option value="chew">Chews</option>
-                <option value="bar">Bar</option>
-                <option value="other">Other</option>
-              </select>
-            </label>
-            <!-- Drink mixes and tabs only: how much water one serving makes up -->
-            <label class="field" data-product-types="drink tab"><span>Mixed with</span><span class="unit-field"><input data-product-key="volume" data-convert="volume" data-format="number" type="text" inputmode="decimal" placeholder="e.g. 500" autocomplete="off"><span class="unit-field__unit" data-unit-label="volume"></span></span></label>
-            <div class="field-row">
-              <label class="field"><span>Carbs<span class="sr-only"> per serving in grams</span></span><span class="unit-field"><input data-product-key="carbs" data-format="number" data-decimals="1" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">g</span></span></label>
-              <label class="field"><span>Sodium<span class="sr-only"> per serving in milligrams</span></span><span class="unit-field"><input data-product-key="sodium" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">mg</span></span></label>
+        <!-- Folds up to its name and a one-line summary; tap the header to edit -->
+        <div class="product disclosure">
+          <h3><button type="button" class="disclosure__toggle" aria-expanded="false"><span class="disclosure__chevron" aria-hidden="true">▶</span><span class="product__text"><span class="disclosure__title product__title"></span><span class="product__summary"></span></span></button></h3>
+          <div class="disclosure__body">
+            <div class="field-group">
+              <label class="field"><span>Name</span><input data-product-key="name" type="text" autocapitalize="words" placeholder="e.g. PF 30 Gel" autocomplete="off"></label>
+              <label class="field"><span>Type</span>
+                <select data-product-key="type">
+                  <option value="gel">Gel</option>
+                  <option value="drink">Drink mix</option>
+                  <option value="tab">Electrolyte tab</option>
+                  <option value="chew">Chews</option>
+                  <option value="bar">Bar</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <!-- Drink mixes and tabs only: how much water one serving makes up -->
+              <label class="field" data-product-types="drink tab"><span>Mixed with</span><span class="unit-field"><input data-product-key="volume" data-convert="volume" data-format="number" type="text" inputmode="decimal" placeholder="e.g. 500" autocomplete="off"><span class="unit-field__unit" data-unit-label="volume"></span></span></label>
+              <div class="field-row">
+                <label class="field"><span>Carbs<span class="sr-only"> per serving in grams</span></span><span class="unit-field"><input data-product-key="carbs" data-format="number" data-decimals="1" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">g</span></span></label>
+                <label class="field"><span>Sodium<span class="sr-only"> per serving in milligrams</span></span><span class="unit-field"><input data-product-key="sodium" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">mg</span></span></label>
+              </div>
+            </div>
+            <div class="product__footer">
+              <p class="settings-note">Per serving: one gel, sachet, tab, bar or pack of chews.</p>
+              <button type="button" class="text-button text-button--danger product__remove">Remove</button>
             </div>
           </div>
-          <p class="settings-note">Per serving: one gel, sachet, tab, bar or pack of chews.</p>
         </div>
       </template>
 

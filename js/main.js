@@ -269,6 +269,18 @@ const productList = document.getElementById("productList");
 const productTemplate = document.getElementById("productTemplate");
 const productsEmpty = document.getElementById("productsEmpty");
 const productTitle = product => product.name?.trim() || "New product";
+const PRODUCT_TYPES = { gel: "Gel", drink: "Drink mix", tab: "Electrolyte tab", chew: "Chews", bar: "Bar", other: "Other" };
+// The folded card's second line, e.g. "Gel · 30 g carbs · 200 mg sodium"
+function productSummary(product) {
+  const parts = [PRODUCT_TYPES[product.type]];
+  if (product.carbs != null) parts.push(`${displayNumber(product.carbs, 1)} g carbs`);
+  if (product.sodium != null) parts.push(`${displayNumber(product.sodium, 0)} mg sodium`);
+  if (product.volume != null && ["drink", "tab"].includes(product.type)) parts.push(`in ${formatWithUnit("volume", product.volume)}`);
+  return parts.join(" · ");
+}
+// Cards start folded; one is open at a time, as in Race Ready's checklists.
+// A new product opens so it can be filled in.
+let openProductId = null;
 let productToRemove = null;
 
 function renderProducts() {
@@ -276,13 +288,34 @@ function renderProducts() {
   productsEmpty.hidden = settings.products.length > 0;
   settings.products.forEach(product => {
     const card = productTemplate.content.firstElementChild.cloneNode(true);
+    const toggle = card.querySelector(".disclosure__toggle");
+    const body = card.querySelector(".disclosure__body");
+    body.id = `product-${product.id}`;
+    toggle.setAttribute("aria-controls", body.id);
+    const setOpen = open => {
+      card.classList.toggle("is-open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+    };
+    setOpen(product.id === openProductId);
+    toggle.addEventListener("click", () => {
+      const open = !card.classList.contains("is-open");
+      productList.querySelectorAll(".product.is-open").forEach(other => {
+        other.classList.remove("is-open");
+        other.querySelector(".disclosure__toggle").setAttribute("aria-expanded", "false");
+      });
+      setOpen(open);
+      openProductId = open ? product.id : null;
+    });
+
     const title = card.querySelector(".product__title");
+    const summary = card.querySelector(".product__summary");
     const removeButton = card.querySelector(".product__remove");
-    const showTitle = () => {
+    const showHeader = () => {
       title.textContent = productTitle(product);
+      summary.textContent = productSummary(product);
       removeButton.setAttribute("aria-label", `Remove ${productTitle(product)}`);
     };
-    showTitle();
+    showHeader();
     const showTypeFields = () => card.querySelectorAll("[data-product-types]").forEach(field => {
       field.hidden = !field.dataset.productTypes.split(" ").includes(product.type);
     });
@@ -293,7 +326,7 @@ function renderProducts() {
       input.addEventListener("input", () => {
         setOrDelete(product, key, input.dataset.format ? readNumberBox(input) : input.value);
         saveSettings();
-        if (key === "name") showTitle();
+        showHeader();
         if (key === "type") showTypeFields();
       });
     });
@@ -311,6 +344,7 @@ function renderProducts() {
 }
 function removeProduct(product) {
   settings.products = settings.products.filter(p => p !== product);
+  if (openProductId === product.id) openProductId = null;
   saveSettings();
   renderProducts();
   document.getElementById("addProduct").focus();
@@ -318,6 +352,7 @@ function removeProduct(product) {
 document.getElementById("addProduct").addEventListener("click", () => {
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   settings.products.push({ id, type: "gel" });
+  openProductId = id;
   saveSettings();
   renderProducts();
   const nameInput = productList.lastElementChild.querySelector('[data-product-key="name"]');
@@ -364,6 +399,7 @@ resetDialog.addEventListener("click", e => { if (e.target === resetDialog) reset
 document.getElementById("resetConfirm").addEventListener("click", () => {
   Object.keys(fields).forEach(key => delete fields[key]);
   settings.products = [];
+  openProductId = null;
   saveSettings();
   renderSettings();
   resetDialog.close();

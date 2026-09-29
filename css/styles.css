@@ -141,7 +141,7 @@ input[type=checkbox] { width: 18px; height: 18px; margin: 1px 0 0; flex-shrink: 
 
 /* Fold-out section (the sweat test), styled like the triathlon app's checklist sections */
 .disclosure { border: 1px solid var(--border); border-radius: var(--radius-sm); margin-top: 12px; overflow: hidden; }
-.disclosure > h4 { margin: 0; font: inherit; }
+.disclosure > h3, .disclosure > h4 { margin: 0; font: inherit; }
 .disclosure__toggle {
   width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px var(--gutter);
   background: var(--head); border: 0; font: inherit; text-align: left; cursor: pointer; color: var(--text);
@@ -157,10 +157,17 @@ input[type=checkbox] { width: 18px; height: 18px; margin: 1px 0 0; flex-shrink: 
 .steps { margin: 0 0 12px; padding-left: 20px; color: var(--muted); font-size: 0.9rem; }
 .steps li + li { margin-top: 4px; }
 
-/* My products: one card per product, with Remove beside its heading */
-.product__heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.product__title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.product + .product .product__title { margin-top: 20px; }
+/* My products: one fold-out card per product. Folded, the header shows the
+   name and a summary (type, carbs, sodium); open, the fields and Remove. */
+.product.disclosure { margin-top: 8px; }
+.product.disclosure:first-child { margin-top: 0; }
+.product__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.product__title, .product__summary { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.product__summary { font-size: 0.85rem; color: var(--muted-2); }
+.product__summary:empty { display: none; }
+.product__footer { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.product__footer .settings-note { margin-top: 0; }
+.disclosure__body > .field-group + .product__footer { margin-top: -4px; }  /* sits 8px under the fields, like a note */
 .text-button {
   border: 0; background: none; padding: 8px 4px; margin: 0 0 -2px; font: inherit; font-size: 0.8rem; font-weight: 600;
   cursor: pointer; -webkit-tap-highlight-color: transparent;
