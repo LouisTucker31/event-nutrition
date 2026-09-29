@@ -53,7 +53,7 @@ darkQuery.addEventListener("change", applyTheme);
 applyTheme();
 
 // Views: one per nav tab, in the same order as the tabs in index.html
-const VIEWS = ["page1", "page2", "workout"];
+const VIEWS = ["page1", "page2", "event"];
 const APP_TITLE = "Race Nutrition";
 const nav = document.querySelector(".lg-nav");
 const tabs = [...nav.querySelectorAll(".lg-nav__item")];
@@ -69,7 +69,8 @@ function showView(name) {
 }
 
 // Reopen on the page last used
-const savedView = storage.read(STORAGE_KEYS.view, VIEWS[0]);
+let savedView = storage.read(STORAGE_KEYS.view, VIEWS[0]);
+if (savedView === "workout") savedView = "event"; // the Event page used to be called Workout
 const startView = VIEWS.includes(savedView) ? savedView : VIEWS[0];
 // Set the highlighted tab before the nav script reads it
 tabs.forEach((tab, i) => {
@@ -179,7 +180,7 @@ function formatAsYouType(input) {
     input.dispatchEvent(new Event("input", { bubbles: true }));
   });
 }
-document.querySelectorAll("#settingsDialog [data-format], #view-workout [data-format]").forEach(formatAsYouType);
+document.querySelectorAll("#settingsDialog [data-format], #view-event [data-format]").forEach(formatAsYouType);
 
 // Units. Everything is stored metric (kg, cm, ml, L/h) and converted for display,
 // so switching units never loses precision. data-convert on a box names its
@@ -435,7 +436,6 @@ document.querySelectorAll("[data-unit-choice]").forEach(button => button.addEven
   settings.units[button.dataset.unitChoice] = button.dataset.value;
   saveSettings();
   renderSettings();
-  renderWorkout(); // its sweat test boxes use the same units
 }));
 renderSettings();
 
@@ -453,16 +453,18 @@ document.getElementById("resetConfirm").addEventListener("click", () => {
   resetDialog.close();
 });
 
-// Workout page: two separate workouts, one for training and one for the race,
+// Event page: two separate workouts, one for training and one for the race,
 // in settings.workouts.training and .race; settings.workoutMode says which is
 // showing. The race stays as it is while the training one is edited for each
 // session. Each is saved as strings for choices, dates and times; numbers for
 // distances (swim m, bike and run km), speeds (km/h), temperature (°C),
-// humidity (%), elevation (m) and weights (kg); seconds for durations, paces
+// humidity (%) and elevation (m); seconds for durations, paces
 // and intervals.
 const WORKOUT_DEFAULTS = { type: "run", setBy: "time", intensity: "steady", workIntensity: "tempo", environment: "outdoor" };
 const WORKOUT_MODES = ["training", "race"];
-const blankWorkout = mode => ({ ...WORKOUT_DEFAULTS, ...(mode === "race" && { intensity: "race" }), aidStations: [] });
+// Races have a goal (just finish ... race all out) in place of an intensity
+const RACE_GOALS = ["finish", "strong", "pb", "allout"];
+const blankWorkout = mode => ({ ...WORKOUT_DEFAULTS, ...(mode === "race" && { goal: "strong" }), aidStations: [] });
 // Earlier versions kept one workout, marked training or race: it moves to its slot
 if (settings.workout) {
   const { event, ...saved } = settings.workout;
@@ -475,15 +477,20 @@ WORKOUT_MODES.forEach(mode => {
   const w = settings.workouts[mode] = { ...blankWorkout(mode), ...settings.workouts[mode] };
   // Strength, HYROX and BJJ / MMA were removed as types: those workouts become Other
   if (["strength", "hyrox", "combat"].includes(w.type)) w.type = "other";
+  // The sweat test moved off this page (it's in Settings)
+  ["testBefore", "testAfter", "testDrank"].forEach(key => delete w[key]);
 });
+if (!RACE_GOALS.includes(settings.workouts.race.goal)) settings.workouts.race.goal = "strong";
 if (!WORKOUT_MODES.includes(settings.workoutMode)) settings.workoutMode = "training";
 saveSettings();
 const workout = () => settings.workouts[settings.workoutMode];
-const workoutView = document.getElementById("view-workout");
+const workoutView = document.getElementById("view-event");
 const workoutInputs = [...workoutView.querySelectorAll("[data-workout-key]")];
 const DISTANCE_TYPES = ["run", "bike", "swim", "triathlon"];
 // Time or distance only applies to sports with a distance; the rest use time
 const effectiveSetBy = () => DISTANCE_TYPES.includes(workout().type) ? workout().setBy : "time";
+// Intervals are for training; a race is paced by its goal
+const usesIntervals = w => settings.workoutMode === "training" && w.intensity === "intervals";
 
 workoutInputs.forEach(input => input.addEventListener("input", () => {
   const key = input.dataset.workoutKey;
@@ -503,7 +510,6 @@ document.querySelectorAll("[data-workout-mode]").forEach(button => button.addEve
   openAidId = null;
   saveSettings();
   renderWorkout();
-  workoutRateNote.textContent = WORKOUT_RATE_NOTE;
   importNote.textContent = IMPORT_NOTE;
 }));
 
@@ -530,7 +536,7 @@ function applyWorkoutVisibility() {
     setBy: value => value === effectiveSetBy(),
     event: value => value === settings.workoutMode,
     env: value => value === w.environment,
-    intervals: value => value === (w.intensity === "intervals" ? "yes" : "no")
+    intervals: value => value === (usesIntervals(w) ? "yes" : "no")
   };
   workoutView.querySelectorAll("[data-types], [data-set-by], [data-event], [data-env], [data-intervals]").forEach(el => {
     el.hidden = !Object.entries(checks).every(([key, passes]) => !(key in el.dataset) || passes(el.dataset[key]));
@@ -541,7 +547,7 @@ function applyWorkoutVisibility() {
   });
   // The total is only worth showing when it's worked out, not typed in
   document.getElementById("totalTimeField").hidden =
-    effectiveSetBy() === "time" && w.type !== "triathlon" && w.intensity !== "intervals";
+    effectiveSetBy() === "time" && w.type !== "triathlon" && !usesIntervals(w);
   workoutView.querySelectorAll(".field-group").forEach(group => {
     const visible = [...group.children].filter(child => !child.hidden);
     [...group.children].forEach(child => child.classList.toggle("is-last-visible", child === visible[visible.length - 1]));
@@ -592,7 +598,7 @@ function intervalPlan(w) {
 // Time for each leg, from times typed in, or from distance and pace or speed.
 // Legs that can't be worked out yet are left out.
 function workoutLegs(w) {
-  if (w.intensity === "intervals") {
+  if (usesIntervals(w)) {
     const plan = intervalPlan(w);
     return plan ? [["Total", plan.total]] : [];
   }
@@ -631,38 +637,7 @@ function updateWorkoutMaths() {
   totalTime.textContent = total ? formatHMS(total) : "–";
   totalTime.classList.toggle("is-set", total > 0);
   totalTimeDetail.textContent = legs.length > 1 ? legs.map(([name, seconds]) => `${name} ${formatHMS(seconds)}`).join(" · ") : "";
-  updateWorkoutSweatTest();
 }
-
-// Sweat test after the session: the workout's own duration is the time
-const workoutRate = document.getElementById("workoutRate");
-const saveWorkoutRate = document.getElementById("saveWorkoutRate");
-const workoutRateNote = document.getElementById("workoutRateNote");
-const WORKOUT_RATE_NOTE = workoutRateNote.textContent;
-let workoutTestRate = null;
-function updateWorkoutSweatTest() {
-  const { testBefore, testAfter, testDrank = 0 } = workout();
-  const seconds = workoutSeconds();
-  workoutTestRate = null;
-  if (testBefore != null && testAfter != null && seconds > 0) {
-    const rate = (testBefore - testAfter + testDrank / 1000) / (seconds / 3600);
-    if (rate > 0 && rate < 5) workoutTestRate = rate; // outside this, a number is probably mistyped
-  }
-  const filledIn = testBefore != null || testAfter != null;
-  workoutRate.textContent = workoutTestRate !== null ? formatWithUnit("rate", workoutTestRate)
-    : filledIn && !seconds ? "Add the workout's duration above"
-    : filledIn ? "Check the numbers above" : "–";
-  workoutRate.classList.toggle("is-set", workoutTestRate !== null);
-  saveWorkoutRate.disabled = workoutTestRate === null;
-}
-saveWorkoutRate.addEventListener("click", () => {
-  fields.sweatRate = workoutTestRate;
-  saveSettings();
-  renderSettings();
-  workoutRateNote.textContent = `Saved. Your sweat rate in Settings is now ${formatWithUnit("rate", workoutTestRate)}.`;
-});
-workoutView.querySelectorAll('[data-workout-key^="test"]').forEach(input =>
-  input.addEventListener("input", () => { workoutRateNote.textContent = WORKOUT_RATE_NOTE; }));
 
 // Course products: picked from My products (drinks and tabs, or gels and chews)
 function fillCourseSelects() {
@@ -781,7 +756,6 @@ document.getElementById("newWorkoutConfirm").addEventListener("click", () => {
   openAidId = null;
   saveSettings();
   renderWorkout();
-  workoutRateNote.textContent = WORKOUT_RATE_NOTE;
   newWorkoutDialog.close();
 });
 
@@ -830,8 +804,6 @@ function workoutFromRaceReady({ type, event }) {
     w.runElevation = number("runElevation");
   } else if (type === "bike") w.elevation = number("bikeElevation");
   else if (type === "run") w.elevation = number("runElevation");
-  // Keep the race's own sweat test numbers
-  ["testBefore", "testAfter", "testDrank"].forEach(key => { w[key] = settings.workouts.race[key]; });
   Object.keys(w).forEach(key => { if (w[key] === undefined) delete w[key]; });
   return w;
 }
@@ -853,7 +825,7 @@ function importRaceReady() {
 document.getElementById("importRaceReady").addEventListener("click", () => {
   // Ask first if the race has anything in it beyond the sweat test
   const w = settings.workouts.race;
-  const inUse = Object.keys(w).some(key => !(key in WORKOUT_DEFAULTS) && !key.startsWith("test") && key !== "aidStations"
+  const inUse = Object.keys(w).some(key => !(key in blankWorkout("race")) && key !== "aidStations"
     && w[key] !== undefined) || w.aidStations.length > 0;
   if (inUse) importDialog.showModal(); else importRaceReady();
 });

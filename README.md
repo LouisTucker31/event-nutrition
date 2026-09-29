@@ -43,7 +43,7 @@ assets/icons/
     drinks and tabs).
   - *Units* (kg, cm or lb, ft in; ml or US fl oz), *Appearance* (light, dark or
     system) and *Clear my details*, which keeps units and appearance.
-- **Workout page** (third tab), laid out like Race Ready's Events page:
+- **Event page** (third tab, with Race Ready's calendar icon), laid out like Race Ready's Events page:
   - *Training / Race:* two separate workouts, saved separately. The race stays
     as a reference while the training workout is changed for each session.
     Everything below applies to whichever is showing.
@@ -53,7 +53,8 @@ assets/icons/
     only reads Race Ready's data.
   - *Details:* name, type (run, bike, swim, triathlon,
     other), date and start time.
-  - *Intensity:* easy, steady, tempo, race pace or intervals. The interval
+  - *Goal* (race): just finish, finish strong, go for a PB or race all out.
+  - *Intensity* (training): easy, steady, tempo, race pace or intervals. The interval
     builder (warm-up, reps × work and rest, cool-down) works out the total time
     and a time-weighted overall intensity.
   - *Duration:* a time (one per leg for triathlon), or distance plus pace or
@@ -61,8 +62,6 @@ assets/icons/
   - *Conditions:* indoor or outdoor, temperature, humidity and elevation.
   - *Aid stations* (races only): the course drink and gel, picked from My
     products, and a fold-out card per station (leg, km, what it hands out).
-  - *Sweat test:* weight before and after plus fluid drunk, over the workout's
-    duration; saving sets the sweat rate in Settings.
   - *Start a new workout* (training) or *Clear this race* clears just that one,
     keeping the other, settings and products.
 - **Units:** numbers are stored metric (kg, cm, ml, L/h) and converted for
@@ -75,7 +74,7 @@ assets/icons/
 - **First two tabs.** Rename their labels and page headings in `index.html`,
   and the view ids (`view-page1`, `view-page2`) with `VIEWS` in `js/main.js`.
   Their icons are Race Ready's (bag, checklist) as placeholders; swap them for
-  Material Symbols Rounded at weight 300, as the Workout tab's "exercise" is.
+  Material Symbols Rounded, matching Race Ready's.
 - **Distance and temperature units** are km and °C only for now.
 
 Every app on `louistucker31.github.io` shares one localStorage and one set of
