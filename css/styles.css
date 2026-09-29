@@ -170,6 +170,11 @@ input, textarea { caret-color: var(--accent); }   /* an accent-coloured text cur
 .plan-warning { margin: 8px 0 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--danger-soft); color: var(--text); font-size: 0.85rem; }
 .plan-warning[hidden] { display: none; }
 .plan-warning strong { color: var(--danger); }
+/* A prompt with a fix, e.g. "No aid stations added yet" + Add typical stations */
+.plan-callout { margin: 8px 0 0; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--head); }
+.plan-callout[hidden] { display: none; }
+.plan-callout p { margin: 0 0 10px; font-size: 0.9rem; }
+.plan-callout .button-secondary { width: 100%; }
 .check-item__hint { display: block; font-size: 0.8rem; color: var(--muted-2); margin-top: 2px; }
 .plan-disclaimer { font-size: 0.8rem; color: var(--muted-2); margin: 24px 4px 0; text-align: center; }
 

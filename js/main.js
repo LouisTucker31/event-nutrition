@@ -1323,6 +1323,7 @@ const AID_CUP_ML = 150; // an assumption: one cup at each aid station with water
 const DRINK_FROM_DEFAULT = { bike: "bottles", run: "aid", other: "bottles" };
 const WEIGHT_LOSS_WARNING_PERCENT = 3;
 const REHYDRATE_LITRES_PER_KG = [1.25, 1.5];
+const REHYDRATE_HOURS = [4, 6]; // over the next 4–6 hours
 // Sodium during: what you'll drink × your sweat sodium (PF&H), not your whole
 // sweat loss, counting the sodium already in gels and course drinks. Optional
 // for events under 2 h 30 below 25 °C. Your mix only goes in what you carry:
@@ -1460,7 +1461,7 @@ function preloadPlan(w) {
   const servings = product ? Math.max(1, Math.round(PRELOAD.sodiumMg / product.sodium)) : 0;
   const recommended = reasons.length > 0;
   return { recommended, reasons, product, servings, sodium: product ? servings * product.sodium : 0,
-    raceDayServings: recommended ? servings : 0 };
+    raceDayServings: servings }; // the race-morning dose, whenever it's shown
 }
 
 // Where the sodium during comes from: gels (the Nutrition timeline's feeds when
@@ -1544,7 +1545,7 @@ function renderHydration(w) {
         ? `${leg.containersUsed} × ${formatWithUnit("volume", leg.container.ml)} bottle${leg.containersUsed === 1 ? "" : "s"}`
         : `your ${formatWithUnit("volume", leg.container.ml)} ${CONTAINER_NAMES[leg.container.kind]}`);
       if (leg.fromAid > 0) bits.push(`${Math.ceil(leg.fromAid * 1000 / AID_CUP_ML - 1e-9)} × ${formatWithUnit("volume", AID_CUP_ML)} at aid stations`);
-      if (leg.needsStations) bits.push("add aid stations on the Event page");
+      if (leg.needsStations) bits.push("no aid stations added yet");
       else if (!bits.length && !plan.toThirst) bits.push(leg.sport === "run" ? "nothing carried: set a handheld or vest on the Event page" : "add your bottles in Settings");
       where.push(prefix + bits.join(" and "));
     });
@@ -1557,7 +1558,13 @@ function renderHydration(w) {
     } else {
       set("weightLoss", `${plan.lossPercent.toFixed(1)}% (${plan.lossKg.toFixed(1)} kg)`);
       set("weightLossNote", `${plan.lossPercent > WEIGHT_LOSS_WARNING_PERCENT ? "Over" : "Under"} 3% of your body weight` + (short ? ", with what you can drink" : ""));
-      if (plan.lossPercent > WEIGHT_LOSS_WARNING_PERCENT) warnings.push(`<strong>Over 3% weight loss.</strong> Performance drops and heat illness gets more likely. ${short ? "Carry more or use more aid stations if you can, " : ""}slow down in the heat, and rehydrate after.`);
+      if (plan.lossPercent > WEIGHT_LOSS_WARNING_PERCENT) {
+        // How many more aid-station cups would bring the loss under 3% and under 2%
+        const cupsFor = percent => Math.max(1, Math.ceil((plan.lossKg - fields.weight * percent / 100) * 1000 / AID_CUP_ML - 1e-9));
+        const [to3, to2] = [3, 2].map(cupsFor);
+        warnings.push(`<strong>Over 3% weight loss.</strong> Past about 3%, performance tends to drop, more so in the heat. `
+          + `${to3} cup${to3 === 1 ? "" : "s"} keep${to3 === 1 ? "s" : ""} you under 3%; ${to2} would keep you under 2%.`);
+      }
     }
     plan.legs.filter(l => l.capped).forEach(leg => warnings.push(`<strong>Capped at ${formatFluid(DRINKING.ceiling[leg.sport] ?? DRINKING.ceiling.other, true)}${plan.legs.length > 1 ? ` on the ${leg.sport}` : ""}.</strong> You'll sweat about ${formatFluid(leg.rate, true)}, but drinking more than this risks low blood sodium (hyponatremia).`));
   }
@@ -1574,9 +1581,21 @@ function renderHydration(w) {
     ? `${l.containersUsed} × ${formatWithUnit("volume", l.container.ml)}`
     : `${formatWithUnit("volume", l.container.ml)} ${CONTAINER_NAMES[l.container.kind]} on the run`).join(" · "));
   set("bottleKit", !drinking || carriers.length ? "" : plan.legs.every(l => l.from === "aid") ? "Aid stations only" : "", false);
+  // Aid stations only on the run, with none added: offer typical ones
+  document.querySelector("[data-add-stations]").hidden = !(drinking && plan.legs.some(l => l.needsStations && l.sport === "run"));
 
-  // Sodium during, and where it comes from
+  // Sodium during, and where it comes from. Not drinking at all: one line instead
+  const preload = preloadPlan(w);
   document.querySelectorAll('#view-hydration [data-result^="servings-"]').forEach(el => { el.textContent = "Not in this plan"; el.classList.remove("is-set"); });
+  const noFluid = drinking && plan.plannedLitres === 0;
+  document.querySelector("[data-electrolytes]").hidden = noFluid;
+  document.querySelector("[data-no-sodium]").hidden = !noFluid;
+  if (noFluid) {
+    const longOrHot = workoutSeconds() > SODIUM_OPTIONAL.underSeconds || (eventConditions(w).air?.temperature ?? 0) > SODIUM_OPTIONAL.belowTemperature;
+    set("noSodium", "No sodium during: you won't be drinking. Pre-loading covers this event."
+      + (longOrHot ? " Consider salt capsules or electrolyte chews." : ""));
+  }
+  let duringServings = 0;
   if (!drinking || plan.sodiumMg === 0) {
     set("sodiumPerHour", swim ? "None during" : plan?.toThirst ? "Not needed" : "– mg/h", false);
     set("sodiumNote", ""); set("sodiumTotal", "–", false);
@@ -1601,13 +1620,29 @@ function renderHydration(w) {
       el.textContent = s.cups ? `${s.cups} cup${s.cups === 1 ? "" : "s"} on the course` : `${halves(s.servings)} serving${s.servings === 1 ? "" : "s"} during`;
       el.classList.add("is-set");
     }));
+    duringServings = sources.find(s => s.mix && s.product === preload.product)?.servings || 0;
+  }
+  // The pre-loading product: the evening dose, the race-morning dose and any
+  // during, against its daily limit (the evening dose is the day before)
+  if (preload.product) {
+    const unit = n => (preload.product.type === "tab" ? `tablet${n === 1 ? "" : "s"}` : `serving${n === 1 ? "" : "s"}`);
+    const n = preload.servings;
+    const today = n + duringServings;
+    const text = `${n} ${unit(n)} evening before · ${n} ${unit(n)} ${settings.workoutMode === "race" ? "race morning" : "before the start"}`
+      + (duringServings ? ` · ${halves(duringServings)} during` : "")
+      + (preload.product.maxPerDay ? ` (${halves(today)} of ${preload.product.maxPerDay} today)` : "");
+    document.querySelectorAll(`#view-hydration [data-result="servings-${preload.product.id}"]`).forEach(el => {
+      el.textContent = preload.recommended ? text : `Optional: ${text}`;
+      el.classList.add("is-set");
+    });
   }
 
-  // Pre-loading: 750 mg in 500 ml, the evening before and 90–45 minutes before the start
-  const preload = preloadPlan(w);
+  // Pre-loading: 750 mg in 500 ml, the evening before and 90–45 minutes before
+  // the start, shown as the sodium in whole servings of your product
   set("preloadStatus", preload.recommended ? "Recommended" : "Optional", preload.recommended);
-  set("preloadSodium", `${formatMg(PRELOAD.sodiumMg)} in ${formatWithUnit("volume", PRELOAD.fluidMl)}`);
-  set("preloadServings", preload.product ? `${preload.servings} × ${productTitle(preload.product)} (${displayNumber(preload.sodium, 0)} mg)` : "Add a tab or drink mix in Settings", !!preload.product);
+  set("preloadSodium", preload.product
+    ? `${displayNumber(preload.sodium, 0)} mg (${preload.servings} × ${productTitle(preload.product)}) in ${formatWithUnit("volume", PRELOAD.fluidMl)}`
+    : `${formatMg(PRELOAD.sodiumMg)} in ${formatWithUnit("volume", PRELOAD.fluidMl)}: add a tab or drink mix in Settings`);
   set("preloadWhen", w.start
     ? `Evening before, and ${timeOfDayMinus(w.start, PRELOAD.startMinutesBefore / 60)}–${timeOfDayMinus(w.start, PRELOAD.finishMinutesBefore / 60)}`
     : "Evening before, and 90–45 min before the start", !!w.start);
@@ -1615,16 +1650,36 @@ function renderHydration(w) {
     ? `Recommended because ${preload.reasons.join(" and ")}. The race-day dose counts towards the product's daily limit.`
     : "Optional: it's recommended for events over 2 hours or 25 °C, or salty sweaters.");
 
-  // Rehydrating after: 1.25–1.5 L for every kg lost, with some salt
+  // Rehydrating after: 1.25–1.5 L for every kg lost, over the next 4–6 hours;
+  // the hourly figure is the top of the range spread over 6 hours
   if (swim || !plan || plan.lossKg < 0.1) {
     set("rehydrate", swim || !plan ? "Drink to thirst" : "Just drink to thirst", false);
-    set("rehydrateNote", swim ? "Weigh yourself before and after a swim to learn how much you lose in the water." : "About 1.25–1.5 L for every kg you lose, with some salt.");
+    set("rehydrateTiming", "");
+    set("rehydrateNote", swim ? "Weigh yourself before and after a swim to learn how much you lose in the water." : "About 1.25–1.5 L for every kg you lose. Meals count; include some salt.");
   } else {
     const [low, high] = REHYDRATE_LITRES_PER_KG.map(l => l * plan.lossKg);
+    const perHour = high / REHYDRATE_HOURS[1];
     set("rehydrate", formatFluidRange(low, high));
-    set("rehydrateNote", `About 1.25–1.5 L for every kg you lose (about ${plan.lossKg.toFixed(1)} kg), over the next few hours. Include some salt: salty food or an electrolyte drink.`);
+    set("rehydrateTiming", `Over the next ${REHYDRATE_HOURS.join("–")} hours: about ${settings.units.fluid === "imperial" ? formatFluid(perHour) : `${perHour.toFixed(1)} L`} an hour`);
+    set("rehydrateNote", `About 1.25–1.5 L for every kg you lose (about ${plan.lossKg.toFixed(1)} kg). Meals count; include some salt.`);
   }
 }
+
+// "Add typical stations": water every 5 km on the run (a triathlon's run leg),
+// within the run distance when it's set, skipping any already there
+const TYPICAL_STATIONS_KM = [5, 10, 15, 20];
+document.getElementById("addTypicalStations").addEventListener("click", () => {
+  const w = workout();
+  const tri = w.type === "triathlon";
+  const distance = w.runDistance > 0 ? w.runDistance : Infinity;
+  TYPICAL_STATIONS_KM.filter(km => km < distance).forEach(km => {
+    if (w.aidStations.some(s => s.at === km && (!tri || s.leg === "run"))) return;
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    w.aidStations.push({ id, ...(tri && { leg: "run" }), at: km, items: ["water"] });
+  });
+  saveSettings();
+  renderWorkout(); // the Event page's cards, and the plan pages
+});
 
 // Nutrition and Hydration pages: they only display what's worked out from
 // Settings and the Event page's selected workout (training or race): which

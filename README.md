@@ -111,21 +111,29 @@ assets/icons/
       vest from the Event page, never bottles) plus a 150 ml cup at each aid
       station with water or course drink (`AID_CUP_ML`, an assumption). Races
       say where you drink from on the Event page (per leg for triathlon);
-      training uses what you carry. Aid-only with no stations asks for them.
+      training uses what you carry. Aid stations only on the run with none
+      added: "No aid stations added yet" and a button that adds water stations
+      every 5 km (5, 10, 15, 20 km, within the run distance if set).
     - Expected loss (sweat minus what you'll drink) in kg and as a % of body
-      weight, with a warning over 3%; it sets "Rehydrate with" (1.25–1.5 L per
-      kg, with some salt).
+      weight. Over 3%, a warning says how many aid-station cups would bring it
+      under 3% and under 2%. It sets "Rehydrate with": 1.25–1.5 L per kg over
+      the next 4–6 hours, with an hourly figure (the top of the range over 6
+      hours); meals count, and include some salt.
     - Sodium = what you'll drink × your sweat saltiness (PF&H), counting gels
       (from the Nutrition timeline) and course drinks, then your tab or mix in
       what you carry: whole or half tablets, at most 2 per bottle, never above
       the product's own strength, within its daily limit after the race-day
       pre-load (with the shortfall and a suggestion if the limit bites).
       "Optional for this length" under 2 h 30 below 25 °C. Aid stations only:
-      tablets during are "Not in this plan".
+      tablets during are "Not in this plan". Nothing to drink at all: one line,
+      "No sodium during… Pre-loading covers this event" (plus salt capsules or
+      chews over 2 h 30 or 25 °C).
     - Pre-loading: 750 mg sodium in 500 ml, twice (the evening before, and 90
-      to 45 minutes before the start), using your product's servings (e.g. 2 ×
-      Phizz at 334 mg). Recommended over 2 hours or 25 °C, or for salty
-      sweaters; otherwise optional.
+      to 45 minutes before the start), shown as the sodium in whole servings
+      of your product (e.g. "668 mg (2 × Phizz) in 500 ml"). Recommended over
+      2 hours or 25 °C, or for salty sweaters; otherwise optional. The product
+      shows its doses and the daily count, e.g. "2 tablets evening before · 2
+      tablets race morning (2 of 4 today)".
     - Swims: the fluid plan moves to before and after.
   - Triathlons show each leg's time window and its part in the plan: nothing on
     the swim, most carbs and fluid on the bike, gels and sips on the run
