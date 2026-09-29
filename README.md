@@ -35,7 +35,8 @@ assets/icons/
   - *Sweat profile:* how much you sweat compared with others, or a measured
     sweat rate (with a fold-out sweat test that works it out); the six
     salty-sweater signs, which give a saltiness band (0–1 ticked low, 2–3
-    average, 4–6 high), or a lab sweat-sodium result in mg/L, which overrides them.
+    average, 4–6 high; worked out as 500, 950 and 1,500 mg/L), or a lab
+    sweat-sodium result in mg/L, which overrides them.
   - *Gut training:* the most carbs per hour you're used to, which will cap the
     carb target.
   - *My products:* gels, drink mixes, electrolyte tabs, chews and bars, each

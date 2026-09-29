@@ -281,11 +281,13 @@ useTestResult.addEventListener("click", () => {
 
 // Saltiness band: from a lab result if there is one, otherwise from how many of
 // the six salty-sweater signs are ticked (0-1 low, 2-3 average, 4-6 high).
-// Bands are sweat sodium in mg per litre.
+// Sweat sodium is in mg per litre. "below" sorts a lab result into a band;
+// "working" is the one value the hydration maths uses for a band (950 is
+// Precision Fuel & Hydration's published average).
 const SALT_BANDS = [
-  { name: "Low", range: "under 700 mg/L", below: 700, minSigns: 0 },
-  { name: "Average", range: "700–1,200 mg/L", below: 1200, minSigns: 2 },
-  { name: "High", range: "over 1,200 mg/L", below: Infinity, minSigns: 4 }
+  { name: "Low", below: 700, working: 500, minSigns: 0 },
+  { name: "Average", below: 1200, working: 950, minSigns: 2 },
+  { name: "High", below: Infinity, working: 1500, minSigns: 4 }
 ];
 const saltSignInputs = [...document.querySelectorAll("[data-salty-sign]")];
 const saltBand = document.getElementById("saltBand");
@@ -297,11 +299,13 @@ function currentSaltBand() {
     : SALT_BANDS.findLast(b => signs.length >= b.minSigns);
   return { band, isSet: fields.sweatSodium != null || signs.length > 0 };
 }
+// Sweat sodium for the hydration maths (mg/L): the lab result, or the band's working value
+const sweatSodiumMgPerL = () => fields.sweatSodium ?? currentSaltBand().band.working;
 function updateSaltBand() {
   const { band, isSet } = currentSaltBand();
   saltBand.textContent = fields.sweatSodium != null
     ? `${band.name} (${displayNumber(fields.sweatSodium, 0)} mg/L, from your lab test)`
-    : `${band.name} (${band.range})`;
+    : `${band.name} (about ${displayNumber(band.working, 0)} mg/L)`;
   saltBand.classList.toggle("is-set", isSet);
 }
 saltSignInputs.forEach(input => input.addEventListener("change", () => {
