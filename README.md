@@ -44,7 +44,7 @@ assets/icons/
     (`gutCarbCap()` returns null), and the Nutrition page says so.
   - *My products:* gels, drink mixes, electrolyte tabs, chews and bars, each
     with carbs, sodium and caffeine per serving (and the water it's mixed
-    with, for drinks and tabs).
+    with, for drinks and tabs), and an optional daily limit from the label.
   - *Bottles:* bottle size and how many you carry (e.g. 2 × 750 ml), for the
     number of bottles and refill timings.
   - *Units* (kg, cm or lb, ft in; ml or US fl oz) and *Appearance* (light,
