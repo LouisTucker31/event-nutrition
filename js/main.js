@@ -964,11 +964,159 @@ importDialog.addEventListener("click", e => { if (e.target === importDialog) imp
 document.getElementById("importConfirm").addEventListener("click", () => { importDialog.close(); importRaceReady(); });
 // Race Ready open in another tab saves to the shared storage: offer the import then
 window.addEventListener("storage", e => { if (e.key === RACE_READY_KEY) { showImport(); importNote.textContent = IMPORT_NOTE; } });
+// Nutrition maths. Carbs during go by how long the session is (CARB_GUIDANCE,
+// g per hour), capped by gut training when it's set. Before and after go by
+// body weight: carb loading 10–12 g/kg a day for the 36–48 hours before
+// sessions over 90 minutes; a pre-workout meal of 1 g/kg for each hour before
+// the start (1–4 hours; early starts get a smaller one 2 hours before);
+// recovery 1.0–1.2 g/kg of carbs an hour for the first few hours, with about
+// 0.3 g/kg of protein, stressed only when training again within 8 hours.
+const CARB_GUIDANCE = [
+  { upTo: 45 * 60, min: 0, max: 0 },
+  { upTo: 75 * 60, min: 0, max: 30 },
+  { upTo: 120 * 60, min: 30, max: 60 },
+  { upTo: Infinity, min: 60, max: 90 }
+];
+const CARB_LOADING = { overSeconds: 90 * 60, perKgPerDay: [10, 12] };
+const PRE_MEAL = { perKgPerHour: 1, hours: 3, earlyHours: 2, earlyBefore: "07:00" };
+const RECOVERY = { carbsPerKgPerHour: [1.0, 1.2], proteinPerKg: 0.3, withinMinutes: 30 };
+const PRE_START_GEL_MINUTES = 15;
+
+const roundTo = (value, step) => Math.round(value / step) * step;
+const formatRange = ([low, high], unit) => (low === high ? `${low} ${unit}` : `${low}–${high} ${unit}`);
+// A time from the start as h:mm, e.g. 0:45, or −0:15 before the start
+function formatClock(seconds) {
+  const minutes = Math.round(Math.abs(seconds) / 60);
+  return `${seconds < 0 ? "−" : ""}${Math.floor(minutes / 60)}:${pad2(minutes % 60)}`;
+}
+// "06:30" minus some hours, as a time of day
+function timeOfDayMinus(time, hours) {
+  const [h, m] = time.split(":").map(Number);
+  const minutes = ((h * 60 + m - hours * 60) % 1440 + 1440) % 1440;
+  return `${pad2(Math.floor(minutes / 60))}:${pad2(minutes % 60)}`;
+}
+
+// Carbs during: guidance for the session length, the cap, the target in g/h,
+// and the hours you can eat in (none on a swim; bike and run in a triathlon)
+function carbPlan(w = workout()) {
+  const seconds = workoutSeconds();
+  if (!seconds) return null;
+  const guidance = CARB_GUIDANCE.find(band => seconds < band.upTo);
+  const cap = gutCarbCap();
+  const target = [guidance.min, guidance.max].map(g => (cap == null ? g : Math.min(g, cap)));
+  const eatingSeconds = w.type === "swim" ? 0
+    : w.type === "triathlon" ? legWindows(w).filter(l => l.leg !== "swim").reduce((t, l) => t + l.end - l.start, 0)
+    : seconds;
+  const total = target.map(g => roundTo(g * eatingSeconds / 3600, 5));
+  return { seconds, guidance, cap, target, eatingSeconds, total };
+}
+
+const result = key => document.querySelector(`[data-result="${key}"]`);
+function setResult(key, text, isSet = true) {
+  const el = result(key);
+  el.textContent = text;
+  el.classList.toggle("is-set", isSet && el.tagName === "OUTPUT");
+}
+
+function renderNutrition(w) {
+  const plan = carbPlan(w);
+  const weight = fields.weight;
+
+  // During: carbs per hour, total, and the guidance beside the cap
+  if (!plan) {
+    ["carbsPerHour", "carbsTotal"].forEach(key => setResult(key, key === "carbsPerHour" ? "– g/h" : "– g", false));
+    setResult("carbGuidance", "Add the duration on the Event page", false);
+    setResult("carbGap", "");
+  } else if (w.type === "swim") {
+    setResult("carbsPerHour", "None during");
+    setResult("carbsTotal", "0 g");
+    setResult("carbGuidance", "Fuel before and after instead", false);
+    setResult("carbGap", "");
+  } else {
+    const { guidance, cap, target, total } = plan;
+    const none = guidance.max === 0;
+    setResult("carbsPerHour", none ? "None needed" : formatRange(target, "g/h"));
+    setResult("carbsTotal", none ? "0 g" : formatRange(total, "g"));
+    let text = none ? "None needed under 45 minutes" : `Guidance ${formatRange([guidance.min, guidance.max], "g/h")}`;
+    if (!none) {
+      text += cap == null ? " · no gut training set, so no cap"
+        : cap < guidance.max ? ` · capped at ${displayNumber(cap, 0)} g/h by your gut training`
+        : ` · within your gut training (${displayNumber(cap, 0)} g/h)`;
+    }
+    setResult("carbGuidance", text, false);
+    // The gap is what tells you to train your gut
+    setResult("carbGap", cap != null && cap < guidance.min
+      ? `${displayNumber(guidance.min - cap, 0)} g/h under the guidance. Training your gut would close the gap.` : "");
+  }
+
+  // Timeline: a gel before the start, then (for triathlon) each leg with its part
+  const timeline = result("carbTimeline");
+  timeline.textContent = "";
+  const addRow = (seconds, what, detail, kind) => {
+    const item = document.createElement("li");
+    item.className = "timeline__item" + (kind ? ` timeline__item--${kind}` : "");
+    const time = document.createElement("span");
+    time.className = "timeline__time";
+    time.textContent = seconds == null ? "–:––" : formatClock(seconds);
+    const text = document.createElement("span");
+    text.className = "timeline__what";
+    text.textContent = what;
+    if (detail) { const sub = document.createElement("span"); sub.textContent = detail; text.append(sub); }
+    item.append(time, text);
+    timeline.append(item);
+  };
+  if (plan && (plan.guidance.max > 0 || w.type === "swim")) {
+    const gel = settings.products.find(product => product.type === "gel");
+    addRow(-PRE_START_GEL_MINUTES * 60, gel ? `1 × ${productTitle(gel)}` : "A gel");
+  }
+  const windows = legWindows(w);
+  if (windows.length) {
+    windows.forEach(({ leg, name, start }) => {
+      addRow(start, name, LEG_ROLES[leg].nutrition, "leg");
+      if (leg !== "swim") addRow(null, "–", null, "placeholder"); // the leg's feeds, to come
+    });
+  } else if (w.type !== "swim") {
+    addRow(null, "–", null, "placeholder");
+    addRow(null, "–", null, "placeholder");
+  }
+
+  // Before and after, by body weight
+  document.querySelector("[data-needs-weight]").hidden = weight != null;
+  const perKg = values => (weight == null ? null : values.map(v => roundTo(v * weight, 5)));
+
+  // Carb loading: sessions over 90 minutes only, shown per day
+  document.querySelector("[data-carb-loading]").hidden = !(plan && plan.seconds > CARB_LOADING.overSeconds);
+  const loading = perKg(CARB_LOADING.perKgPerDay);
+  setResult("loadPerDay", loading ? formatRange(loading, "g") : "– g", !!loading);
+
+  // Pre-workout meal: 1 g/kg for each hour before; an early start gets a smaller
+  // meal about 2 hours before
+  const early = w.start && w.start < PRE_MEAL.earlyBefore;
+  const hours = early ? PRE_MEAL.earlyHours : PRE_MEAL.hours;
+  setResult("mealTime", w.start ? timeOfDayMinus(w.start, hours) : `${hours} h before`, !!w.start);
+  const meal = perKg([PRE_MEAL.perKgPerHour * hours]);
+  setResult("mealCarbs", meal ? `${meal[0]} g` : "– g", !!meal);
+  setResult("mealNote", `${hours} hours before the start, at 1 g/kg for each hour (1–4 hours out).`
+    + (early ? " An early start gets a smaller meal about 2 hours before." : "")
+    + (w.start ? "" : " Add a start time on the Event page for a clock time."));
+
+  // Recovery: stressed when training again within about 8 hours
+  const soon = settings.workoutMode === "training" && w.nextSoon === "yes";
+  const carbs = perKg(RECOVERY.carbsPerKgPerHour);
+  const protein = perKg([RECOVERY.proteinPerKg]);
+  setResult("recoveryCarbs", carbs ? formatRange(carbs, "g") : "– g", !!carbs && soon);
+  setResult("recoveryProtein", protein ? `${protein[0]} g` : "– g", !!protein && soon);
+  setResult("recoveryWhen", soon ? `Within ${RECOVERY.withinMinutes} min, then each hour for the first few hours` : "At your next meal", soon);
+  setResult("recoveryNote", soon
+    ? "You're training again within 8 hours, so start refuelling straight away: 1.0–1.2 g/kg of carbs an hour, and about 0.3 g/kg of protein."
+    : "Recovery matters most when you train again within about 8 hours. Otherwise normal meals cover it, aiming for about 0.3 g/kg of protein.");
+}
+
 // Nutrition and Hydration pages: they only display what's worked out from
-// Settings and the Event page's selected workout (training or race). The
-// worked-out values (<output data-result>) show "–" until the formulas are
-// added; this fills in what's already known: which event it's for, the gut
-// limit, the saltiness band and the products to use.
+// Settings and the Event page's selected workout (training or race): which
+// event it's for, the Nutrition maths (renderNutrition), the saltiness band and
+// the products to use. Hydration's worked-out values (<output data-result>)
+// show "–" until its formulas are added.
 const WORKOUT_TYPE_NAMES = { run: "Run", bike: "Bike", swim: "Swim", triathlon: "Triathlon", other: "Other" };
 function renderPlans() {
   const w = workout();
@@ -1007,10 +1155,7 @@ function renderPlans() {
     });
   });
 
-  const cap = gutCarbCap();
-  document.querySelector("[data-gut-note]").textContent = cap
-    ? `Never more than your gut is trained for (${displayNumber(cap, 0)} g an hour).`
-    : "No gut training set in Settings, so this follows the standard guidance with no cap.";
+  renderNutrition(w);
   document.querySelector("[data-bottle-kit]").textContent = fields.bottleSize && fields.bottleCount
     ? `You carry ${displayNumber(fields.bottleCount, 0)} × ${formatWithUnit("volume", fields.bottleSize)}`
     : "Add your bottles in Settings";

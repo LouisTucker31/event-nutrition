@@ -58,16 +58,27 @@ assets/icons/
   name, type, time and date under the title. The layout is in place; worked-out
   values show "–" until the formulas are added (each is an
   `<output data-result="...">` in `index.html`).
-  - *Nutrition:* carbs per hour and in total, a timeline of what to take when,
-    servings of each of your products; before (day-before carb loading, the
-    pre-workout meal) and after (recovery carbs and protein).
+  - *Nutrition* (worked out, see the constants at the top of `renderNutrition`
+    in `js/main.js`):
+    - Carbs per hour from the guidance for the session length (none under 45
+      min, up to 30 g/h to 75 min, 30–60 g/h to 2 h, 60–90 g/h beyond),
+      capped by gut training, shown side by side with the gap; total carbs over
+      the time you can eat (none on a swim; bike and run in a triathlon).
+    - Timeline: a gel 15 minutes before the start, then each triathlon leg
+      with its part; the feeds themselves are still placeholders.
+    - Carb loading, for sessions over 90 minutes only: 10–12 g/kg a day for the
+      36–48 hours before, with a note on easy, low-fibre carbs.
+    - Pre-workout meal: 1 g/kg for each hour before the start, 3 hours before
+      (2 hours for starts before 07:00), with an "eat by" time.
+    - Recovery: 1.0–1.2 g/kg of carbs an hour and about 0.3 g/kg of protein,
+      stressed ("within 30 min") only when training again within 8 hours.
   - *Hydration:* fluid per hour and in total, bottles, sodium per hour and in
     total, what to mix, servings of your drinks and tabs; pre-loading before,
     and how much to drink after.
   - Triathlons show each leg's time window and its part in the plan: nothing on
     the swim, most carbs and fluid on the bike, gels and sips on the run
     (`legWindows()`, `LEG_ROLES`). Swims note that fuelling moves to before and after.
-  - Already live: the event line, the gut limit, the saltiness band and the
+  - Also live: the event line, the saltiness band and the
     product names, and a "not medical advice" note on both.
 - **Event page** (third tab, with Race Ready's calendar icon), laid out like Race Ready's Events page:
   - *Training / Race:* two separate workouts, saved separately. The race stays
@@ -78,7 +89,8 @@ assets/icons/
     time, distances, elevation, and paces worked out from the goal times. It
     only reads Race Ready's data.
   - *Details:* name, type (run, bike, swim, triathlon,
-    other), date and start time.
+    other), date and start time, and (training) whether you train again
+    within 8 hours.
   - *Goal* (race): just finish, finish strong, go for a PB or race all out.
   - *Intensity* (training): easy, steady, tempo, race pace or intervals. The interval
     builder (warm-up, reps × work and rest, cool-down) works out the total time
@@ -104,7 +116,7 @@ assets/icons/
 
 ## Still to do
 
-- **Formulas** for the Nutrition and Hydration values.
+- **Formulas** for the Hydration values, and the timeline's feeds and product servings.
 - **Distance and temperature units** are km and °C only for now.
 
 Every app on `louistucker31.github.io` shares one localStorage and one set of

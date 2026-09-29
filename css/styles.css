@@ -160,6 +160,11 @@ input, textarea { caret-color: var(--accent); }   /* an accent-coloured text cur
 .timeline__item:last-child { border-bottom: 0; }
 .timeline__time { min-width: 3.2em; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
 .timeline__what { flex: 1; min-width: 0; }
+/* Triathlon: a heading row for each leg, with what it's for */
+.timeline__item--leg { font-weight: 600; }
+.timeline__item--leg .timeline__time { color: var(--text); }
+.timeline__item--leg .timeline__what span { display: block; font-weight: 400; font-size: 0.85rem; color: var(--muted-2); }
+.timeline__item--placeholder { color: var(--faint); }
 .plan-swim-note { margin: 0 4px 8px; }
 .check-item__hint { display: block; font-size: 0.8rem; color: var(--muted-2); margin-top: 2px; }
 .plan-disclaimer { font-size: 0.8rem; color: var(--muted-2); margin: 24px 4px 0; text-align: center; }

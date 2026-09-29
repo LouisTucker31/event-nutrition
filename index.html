@@ -45,38 +45,35 @@
         <div class="field computed-field computed-field--hero"><span id="carbsHourLabel">Carbs per hour</span><output data-result="carbsPerHour" aria-labelledby="carbsHourLabel">– g/h</output></div>
         <div class="field computed-field computed-field--hero"><span id="carbsTotalLabel">Total carbs</span><output data-result="carbsTotal" aria-labelledby="carbsTotalLabel">– g</output></div>
       </div>
+      <!-- The guidance for this length of session beside your gut-training cap, so the gap shows -->
+      <div class="field computed-field"><span id="carbGuidanceLabel">For this length of session</span><output data-result="carbGuidance" aria-labelledby="carbGuidanceLabel">–</output><span class="computed-field__detail" data-result="carbGap"></span></div>
     </div>
-    <p class="settings-note" data-gut-note>Never more than your gut is trained for.</p>
-
-    <!-- Triathlon: each leg's time window and its part in the plan (LEG_ROLES in main.js) -->
-    <div data-leg-plan-wrap hidden>
-      <h3 class="settings-subheading">By leg</h3>
-      <div class="field-group" data-leg-plan="nutrition"></div>
-    </div>
+    <p class="settings-note">Guidance goes by how long you're out: none needed under 45 minutes, up to 30 g/h to 75 minutes, 30–60 g/h to 2 hours, and 60–90 g/h beyond.</p>
 
     <h3 class="settings-subheading">Timeline</h3>
     <div class="field-group">
-      <ol class="timeline" data-result="carbTimeline" aria-label="When to take what">
-        <li class="timeline__item"><span class="timeline__time">–:––</span><span class="timeline__what">–</span></li>
-        <li class="timeline__item"><span class="timeline__time">–:––</span><span class="timeline__what">–</span></li>
-        <li class="timeline__item"><span class="timeline__time">–:––</span><span class="timeline__what">–</span></li>
-      </ol>
+      <ol class="timeline" data-result="carbTimeline" aria-label="When to take what"></ol>
     </div>
-    <p class="settings-note">Times from the start, e.g. “0:20 gel, 0:45 drink”, using your products.</p>
+    <p class="settings-note">Times from the start; −0:15 is 15 minutes before.</p>
 
     <h3 class="settings-subheading">From your products</h3>
     <div class="field-group" data-product-totals="gel chew bar drink other"></div>
     <p class="settings-note" data-products-empty hidden>Add your gels, drink mixes and bars in Settings, under My products.</p>
 
     <h2 class="settings-heading">Before</h2>
-    <h3 class="settings-subheading">Day before: carb loading</h3>
-    <div class="field-group">
-      <div class="field-row">
-        <div class="field computed-field"><span id="loadPerKgLabel">Per kg</span><output data-result="loadPerKg" aria-labelledby="loadPerKgLabel">– g/kg</output></div>
-        <div class="field computed-field"><span id="loadTotalLabel">Total carbs</span><output data-result="loadTotal" aria-labelledby="loadTotalLabel">– g</output></div>
+    <p class="settings-note plan-swim-note" data-needs-weight hidden>Add your weight in Settings to work out the amounts below, which go by body weight.</p>
+    <!-- Only for sessions over 90 minutes -->
+    <div data-carb-loading hidden>
+      <h3 class="settings-subheading">Carb loading</h3>
+      <div class="field-group">
+        <div class="field-row">
+          <div class="field computed-field computed-field--hero"><span id="loadPerDayLabel">Carbs per day</span><output data-result="loadPerDay" aria-labelledby="loadPerDayLabel">– g</output></div>
+          <div class="field computed-field"><span id="loadPerKgLabel">Per kg per day</span><output aria-labelledby="loadPerKgLabel">10–12 g/kg</output></div>
+        </div>
+        <div class="field computed-field"><span id="loadWhenLabel">When</span><output data-result="loadWhen" aria-labelledby="loadWhenLabel">The 36–48 hours before the start</output></div>
       </div>
+      <p class="settings-note">That's a lot of carbs, so make them easy ones: fewer fibre-rich foods, and more from drinks, white rice, pasta, bread and sweets.</p>
     </div>
-    <p class="settings-note">For sessions over 90 minutes.</p>
     <h3 class="settings-subheading">Pre-workout meal</h3>
     <div class="field-group">
       <div class="field-row">
@@ -84,16 +81,17 @@
         <div class="field computed-field"><span id="mealCarbsLabel">Carbs</span><output data-result="mealCarbs" aria-labelledby="mealCarbsLabel">– g</output></div>
       </div>
     </div>
-    <p class="settings-note">1–4 hours before the start, worked out per kg.</p>
+    <p class="settings-note" data-result="mealNote">1 g/kg for each hour before the start, 1–4 hours out.</p>
 
     <h2 class="settings-heading">After</h2>
     <div class="field-group">
       <div class="field-row">
-        <div class="field computed-field"><span id="recoveryCarbsLabel">Recovery carbs</span><output data-result="recoveryCarbs" aria-labelledby="recoveryCarbsLabel">– g</output></div>
+        <div class="field computed-field"><span id="recoveryCarbsLabel">Carbs per hour</span><output data-result="recoveryCarbs" aria-labelledby="recoveryCarbsLabel">– g</output></div>
         <div class="field computed-field"><span id="recoveryProteinLabel">Protein</span><output data-result="recoveryProtein" aria-labelledby="recoveryProteinLabel">– g</output></div>
       </div>
+      <div class="field computed-field"><span id="recoveryWhenLabel">When</span><output data-result="recoveryWhen" aria-labelledby="recoveryWhenLabel">–</output></div>
     </div>
-    <p class="settings-note">Per kg of body weight. Most useful when you train again the same day.</p>
+    <p class="settings-note" data-result="recoveryNote">1.0–1.2 g/kg of carbs an hour for the first few hours, and about 0.3 g/kg of protein.</p>
 
     <p class="plan-disclaimer">These are starting points to test in training, not medical advice.</p>
   </section>
@@ -194,6 +192,13 @@
         <label class="field"><span>Date</span><span class="date-field"><input data-workout-key="date" type="date"><span class="date-field__text" aria-hidden="true"></span></span></label>
         <label class="field"><span>Start time</span><input data-workout-key="start" type="time"></label>
       </div>
+      <!-- Training only: whether recovery needs to start straight away -->
+      <label class="field" data-event="training"><span>Training again within 8 hours?</span>
+        <select data-workout-key="nextSoon">
+          <option value="">No</option>
+          <option value="yes">Yes</option>
+        </select>
+      </label>
     </div>
     <p class="settings-note">The start time lets the plan give clock times, like “eat by 06:30”.</p>
 
