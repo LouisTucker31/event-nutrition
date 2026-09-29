@@ -2,15 +2,17 @@
   color-scheme: light;
   --bg: #ffffff; --text: #1a1a1a; --muted: #555; --muted-2: #666; --faint: #707070;
   --border: #e3e3e3; --line: #f0f0f0; --head: #fafafa;
-  --done-border: #b7dcc6; --done-head: #eef7f1;
+  --done-border: #e6c0b3; --done-head: #f9efeb;
   --bar: #eee; --check: var(--accent);
   --field: #ffffff; --seg-bg: #efeff0; --seg-on: #ffffff;
   --focus: var(--accent); --danger: #d70015; --on-danger: #fff;
-  /* Accent: sage green, used only for progress, completion and selection.
+  /* Accent: clay (terracotta), used only for progress, completion and selection.
      --accent is deep enough for text and icons (5.7:1 on white); --accent-soft
-     is for fills; the gradient runs soft to deep, for progress. */
-  --accent: #2a7350; --accent-soft: #e3f2e9;
-  --accent-gradient: linear-gradient(90deg, #9fd4b6, #2a7350);
+     is for fills; the gradient runs soft to deep, for progress.
+     Sister apps use the same recipe in their own colour (Race Ready: sage green
+     #2a7350 / #8fd1ab), so keep the contrast figures if you ever adjust it. */
+  --accent: #a24e2f; --accent-soft: #f7e9e3;
+  --accent-gradient: linear-gradient(90deg, #e1ac98, #a24e2f);
 
   --radius-sm: 8px;
   --radius: 10px;
@@ -22,12 +24,12 @@
   color-scheme: dark;
   --bg: #0b0b0c; --text: #f2f2f7; --muted: #a1a1a6; --muted-2: #8e8e93; --faint: #8e8e93;
   --border: #2c2c2e; --line: #242426; --head: #1c1c1e;
-  --done-border: #2d5a44; --done-head: #12251b;
+  --done-border: #5e392c; --done-head: #261712;
   --bar: #2c2c2e; --check: var(--accent);
   --field: #1c1c1e; --seg-bg: #1c1c1e; --seg-on: #3a3a3c;
   --focus: var(--accent); --danger: #ff6961; --on-danger: #000;
-  --accent: #8fd1ab; --accent-soft: rgba(143, 209, 171, 0.14);
-  --accent-gradient: linear-gradient(90deg, #3d8a63, #8fd1ab);
+  --accent: #e9b7a5; --accent-soft: rgba(233, 183, 165, 0.14);  /* 11:1 on --bg */
+  --accent-gradient: linear-gradient(90deg, #9c5840, #e9b7a5);
 }
 html, body { background: var(--bg) !important; min-height: 100%; }
 /* Follow the iPhone's text size setting (Dynamic Type) */
@@ -56,7 +58,7 @@ h1:focus { outline: none; } /* focused only to announce the view change */
 html { touch-action: manipulation; }
 
 input, select, textarea { font-size: max(var(--input-size), 1em) !important; }
-input, textarea { caret-color: var(--accent); }   /* a green text cursor, as iOS tints it */
+input, textarea { caret-color: var(--accent); }   /* an accent-coloured text cursor, as iOS tints it */
 
 /* Shared form styles for the series: headed groups of fields, as in the
    triathlon app's Events and Settings pages. Unused until pages get content. */
