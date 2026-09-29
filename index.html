@@ -43,7 +43,7 @@
     <div class="field-group">
       <div class="field-row">
         <div class="field computed-field computed-field--hero"><span id="carbsHourLabel">Carbs per hour</span><output data-result="carbsPerHour" aria-labelledby="carbsHourLabel">– g/h</output></div>
-        <div class="field computed-field computed-field--hero"><span id="carbsTotalLabel">Total carbs</span><output data-result="carbsTotal" aria-labelledby="carbsTotalLabel">– g</output></div>
+        <div class="field computed-field computed-field--hero"><span id="carbsTotalLabel">Total carbs</span><output data-result="carbsTotal" aria-labelledby="carbsTotalLabel">– g</output><span class="computed-field__detail" data-result="carbsPlanned"></span></div>
       </div>
       <!-- The guidance for this length of session beside your gut-training cap, so the gap shows -->
       <div class="field computed-field"><span id="carbGuidanceLabel">For this length of session</span><output data-result="carbGuidance" aria-labelledby="carbGuidanceLabel">–</output><span class="computed-field__detail" data-result="carbGap"></span></div>
@@ -66,13 +66,16 @@
     <div data-carb-loading hidden>
       <h3 class="settings-subheading">Carb loading</h3>
       <div class="field-group">
+        <div class="field computed-field"><span id="loadStatusLabel">For this length</span><output data-result="loadStatus" aria-labelledby="loadStatusLabel">–</output></div>
         <div class="field-row">
-          <div class="field computed-field computed-field--hero"><span id="loadPerDayLabel">Carbs a day</span><output data-result="loadPerDay" aria-labelledby="loadPerDayLabel">– g</output><span class="computed-field__detail" data-result="loadKcal"></span></div>
+          <!-- With normal daily carbs set (Settings), the main line is the increase and the total goes beneath -->
+          <div class="field computed-field computed-field--hero"><span id="loadPerDayLabel" data-result="loadPerDayLabel">Carbs a day</span><output data-result="loadPerDay" aria-labelledby="loadPerDayLabel">– g</output><span class="computed-field__detail" data-result="loadKcal"></span></div>
           <div class="field computed-field"><span id="loadPerKgLabel">Per kg a day</span><output data-result="loadPerKg" aria-labelledby="loadPerKgLabel">–</output></div>
         </div>
         <div class="field computed-field"><span id="loadWhenLabel">When</span><output data-result="loadWhen" aria-labelledby="loadWhenLabel">–</output></div>
+        <div class="field computed-field"><span id="loadSplitLabel">Through the day</span><output data-result="loadSplit" aria-labelledby="loadSplitLabel">–</output><span class="computed-field__detail">Keep fibre and fat lower.</span></div>
       </div>
-      <p class="settings-note">Aim for a clear increase on your normal intake; mostly white carbs and drinks, less fibre.</p>
+      <p class="settings-note" data-result="loadNote">Aim for a clear increase on your normal intake; mostly white carbs and drinks, less fibre.</p>
     </div>
     <h3 class="settings-subheading" data-result="mealHeading">Pre-race meal</h3>
     <div class="field-group">
@@ -80,8 +83,24 @@
         <div class="field computed-field"><span id="mealTimeLabel">Eat by</span><output data-result="mealTime" aria-labelledby="mealTimeLabel">–:––</output></div>
         <div class="field computed-field"><span id="mealCarbsLabel">Carbs</span><output data-result="mealCarbs" aria-labelledby="mealCarbsLabel">– g</output></div>
       </div>
+      <!-- An example meal near the low end, from MEAL_FOODS in main.js -->
+      <div class="field computed-field"><span id="mealExampleLabel">For example</span><output data-result="mealExample" aria-labelledby="mealExampleLabel">–</output><span class="computed-field__detail" data-result="mealFoods"></span></div>
     </div>
     <p class="settings-note" data-result="mealNote">1 g/kg for each hour before the start, 1–4 hours out.</p>
+    <p class="settings-note">Mostly carbs, low fat and fibre. Eggs and similar are fine alongside, but count the carbs, not the plate.</p>
+
+    <!-- Only when a product has caffeine set -->
+    <div data-caffeine hidden>
+      <h3 class="settings-subheading">Caffeine (optional)</h3>
+      <div class="field-group">
+        <div class="field-row">
+          <div class="field computed-field"><span id="caffeineWhenLabel">Take at</span><output data-result="caffeineWhen" aria-labelledby="caffeineWhenLabel">–</output></div>
+          <div class="field computed-field"><span id="caffeineMgLabel">Amount</span><output data-result="caffeineMg" aria-labelledby="caffeineMgLabel">–</output></div>
+        </div>
+        <div class="field computed-field"><span id="caffeineFromLabel">From</span><output data-result="caffeineFrom" aria-labelledby="caffeineFromLabel">–</output></div>
+      </div>
+      <p class="settings-note">1–3 mg/kg about 60 minutes before the start. Only if you've tried it in training.</p>
+    </div>
 
     <h2 class="settings-heading">After</h2>
     <div class="field-group">
@@ -493,8 +512,9 @@
             <span class="unit-field" data-units="imperial" hidden><input id="heightFt" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off" aria-labelledby="heightLabel heightFtUnit"><span class="unit-field__unit" id="heightFtUnit">ft</span><input id="heightIn" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off" aria-labelledby="heightLabel heightInUnit"><span class="unit-field__unit" id="heightInUnit">in</span></span>
           </div>
         </div>
+        <label class="field"><span>Normal daily carbs (optional)</span><span class="unit-field"><input data-key="normalCarbs" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="e.g. 300" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">g a day</span></span></label>
       </div>
-      <p class="settings-note">Weight sets your carb and fluid targets. Age, sex and height are for carb loading, pre-race meals and recovery, which are worked out per kg of body weight.</p>
+      <p class="settings-note">Weight sets your carb and fluid targets. Age, sex and height are for carb loading, pre-race meals and recovery, which are worked out per kg of body weight. Normal daily carbs lets carb loading show how much extra to eat.</p>
 
       <h2 class="settings-heading">Sweat profile</h2>
       <h3 class="settings-subheading">How much you sweat</h3>

@@ -31,7 +31,8 @@ assets/icons/
   sits exactly where the cog was. Escape also closes it. The browser tab title
   follows the page, e.g. "Page 2 – Race Nutrition".
 - **Settings page**, in this order:
-  - *My details:* sex, age, weight and height.
+  - *My details:* sex, age, weight and height, and (optional) normal daily
+    carbs, so carb loading can show the increase.
   - *Sweat profile:* how much you sweat compared with others (base rates of
     0.5, 0.9 and 1.3 L/h at about 18 °C and a steady effort), or a measured
     sweat rate with the temperature, sport and effort it was measured at (the
@@ -76,15 +77,24 @@ assets/icons/
       row has a running total; the product's daily limit is respected.
       Example: a 2:06:36 run at a 30 g/h cap with a 22 g gel gives −0:15,
       0:30 and 1:15, 3 gels, 66 g.
+    - Total carbs shows the target beside what's planned, e.g. "65 g target ·
+      66 g planned (3 gels)". Feeds keep out of the last 30 minutes; when the
+      last is 45+ minutes before the finish, a note says why.
     - "From your products" shows servings from the timeline (e.g. "3
       servings, 66 g"); anything unused says "Not in this plan".
-    - Carb loading, per day with kcal: 7–8 g/kg the day before (90 min–2 h 30),
-      8–10 g/kg a day for 36 hours (2 h 30–4 h), 10–12 g/kg a day for 36–48
-      hours (over 4 h).
+    - Carb loading, per day with kcal: 7–8 g/kg the day before (90 min–2 h 30,
+      marked optional: a carb-heavy dinner is often enough), 8–10 g/kg a day
+      for 36 hours (2 h 30–4 h), 10–12 g/kg a day for 36–48 hours (over 4 h).
+      With normal daily carbs set, the main line is the increase ("About
+      +295–400 g on top of a normal day"), with the total beneath. Split into
+      3 meals and 2 snacks, keeping fibre and fat lower.
     - Pre-race meal: 1 g/kg up to 1 g/kg for each hour before (at most 4
       g/kg), eaten the hours before set in Settings (default 2); runs go for
-      the lower end. E.g. 103 kg, 1.5 h before a 09:30 start: eat by 08:00,
-      105–155 g.
+      the lower end. E.g. 103 kg, 2 h before a 09:30 start: eat by 07:30,
+      105–205 g. An example meal near the low end is built from bagels, jam,
+      banana and honey, with a list of foods' approximate carbs (`MEAL_FOODS`).
+    - Caffeine (optional, only when a product has caffeine): 1–3 mg/kg about
+      60 minutes before the start, in mg and servings of that product.
     - Recovery: 1.0–1.2 g/kg of carbs an hour and about 0.3 g/kg of protein,
       stressed ("within 30 min") only when training again within 8 hours.
   - *Hydration* (worked out, see the constants above `renderHydration` in

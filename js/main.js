@@ -966,18 +966,24 @@ importDialog.addEventListener("click", e => { if (e.target === importDialog) imp
 document.getElementById("importConfirm").addEventListener("click", () => { importDialog.close(); importRaceReady(); });
 // Race Ready open in another tab saves to the shared storage: offer the import then
 window.addEventListener("storage", e => { if (e.key === RACE_READY_KEY) { showImport(); importNote.textContent = IMPORT_NOTE; } });
+
 // Nutrition maths. Carbs during go by how long the session is (CARB_GUIDANCE,
 // g per hour), capped by gut training when it's set, at 60 g/h when every carb
 // product in My products is glucose only, and at 60 g/h over 4 hours unless
-// there's a glucose + fructose product. The timeline spaces feeds of your
+// there's a glucose + fructose product. The target total is shown beside what's
+// planned (the gels, rounded to whole ones). The timeline spaces feeds of your
 // first gel or chew at the top of that target (after any carbs from a drink mix
-// in the hydration plan), starting with a gel 15 minutes before the start.
+// in the hydration plan), starting with a gel 15 minutes before the start and
+// keeping out of the last 30 minutes.
 // Before and after go by body weight: carb loading tiered by session length
-// (CARB_LOADING), shown per day with kcal; a pre-race meal of 1 g/kg up to 1
-// g/kg for each hour before the start (at most 4 g/kg), eaten the number of
-// hours before set in Settings; recovery 1.0–1.2 g/kg of carbs an hour for the
-// first few hours, with about 0.3 g/kg of protein, stressed only when training
-// again within 8 hours.
+// (CARB_LOADING), per day with kcal, as an increase on normal daily carbs when
+// that's set (Settings), split into meals and snacks, and optional up to 2 h 30;
+// a pre-race meal of 1 g/kg up to 1 g/kg for each hour before the start (at
+// most 4 g/kg), eaten the number of hours before set in Settings, with an
+// example meal near the low end (MEAL_FOODS); optional caffeine, 1–3 mg/kg an
+// hour before, when a product has it; recovery 1.0–1.2 g/kg of carbs an hour
+// for the first few hours, with about 0.3 g/kg of protein, stressed only when
+// training again within 8 hours.
 const CARB_GUIDANCE = [
   { upTo: 45 * 60, min: 0, max: 0 },
   { upTo: 75 * 60, min: 0, max: 30 },
@@ -988,14 +994,51 @@ const CARB_GUIDANCE = [
 const GLUCOSE_ONLY_MAX = 60;       // g/h the gut can take from glucose alone
 const CARB_PRODUCT_TYPES = ["gel", "chew", "bar", "drink"];
 const CARB_LOADING = [
-  { over: 90 * 60, upTo: 150 * 60, perKgPerDay: [7, 8], when: "The day before" },
-  { over: 150 * 60, upTo: 240 * 60, perKgPerDay: [8, 10], when: "Each day for the 36 hours before" },
-  { over: 240 * 60, upTo: Infinity, perKgPerDay: [10, 12], when: "Each day for the 36–48 hours before" }
+  { over: 90 * 60, upTo: 150 * 60, perKgPerDay: [7, 8], when: "The day before",
+    status: "Optional: a carb-heavy dinner the night before is often enough" },
+  { over: 150 * 60, upTo: 240 * 60, perKgPerDay: [8, 10], when: "Each day for the 36 hours before", status: "Recommended" },
+  { over: 240 * 60, upTo: Infinity, perKgPerDay: [10, 12], when: "Each day for the 36–48 hours before", status: "Recommended" }
 ];
 const KCAL_PER_GRAM_CARB = 4;
+// A loading day as 3 meals and 2 snacks, a meal being 7 parts to a snack's 3
+const LOAD_SPLIT = { meals: 3, snacks: 2, mealParts: 7, snackParts: 3 };
 const PRE_MEAL = { perKgLow: 1, perKgPerHour: 1, maxPerKg: 4, defaultHours: 2 };
+// Carbs in some pre-race foods (approximate). The example meal uses the
+// breakfast ones (inMeal), up to the most of each shown.
+const MEAL_FOODS = [
+  { name: "bagel", plural: "bagels", carbs: 45, inMeal: 4 },
+  { name: "banana", plural: "bananas", carbs: 25, inMeal: 2 },
+  { name: "tbsp jam", plural: "tbsp jam", carbs: 13, inMeal: 2 },
+  { name: "tbsp honey", plural: "tbsp honey", carbs: 17, inMeal: 1 },
+  { name: "slice white toast", plural: "slices white toast", carbs: 15 },
+  { name: "porridge (50 g oats, dry)", carbs: 30 },
+  { name: "white rice (200 g cooked)", carbs: 55 }
+];
+const CAFFEINE = { perKg: [1, 3], minutesBefore: 60 };
 const RECOVERY = { carbsPerKgPerHour: [1.0, 1.2], proteinPerKg: 0.3, withinMinutes: 30 };
-const FEEDS = { preStartMinutes: 15, stepMinutes: 5, stopBeforeFinishMinutes: 20, fallbackGel: { name: "gel", carbs: 22 } };
+const FEEDS = { preStartMinutes: 15, stepMinutes: 5, stopBeforeFinishMinutes: 30, lastStretchNoteMinutes: 45,
+  fallbackGel: { name: "gel", carbs: 22 } };
+
+// An example pre-race meal close to a carb target, from the breakfast foods in
+// MEAL_FOODS (at least one bagel), e.g. "2 bagels, 1 tbsp jam and 1 banana"
+function exampleMeal(target) {
+  const foods = MEAL_FOODS.filter(f => f.inMeal);
+  let best = null;
+  const tryCounts = (i, counts) => {
+    if (i === foods.length) {
+      if (!counts[0]) return;
+      const carbs = counts.reduce((t, n, j) => t + n * foods[j].carbs, 0);
+      const items = counts.reduce((t, n) => t + n, 0);
+      const miss = Math.abs(carbs - target);
+      if (!best || miss < best.miss || (miss === best.miss && items < best.items)) best = { counts: [...counts], carbs, items, miss };
+      return;
+    }
+    for (let n = 0; n <= foods[i].inMeal; n++) { counts[i] = n; tryCounts(i + 1, counts); }
+  };
+  tryCounts(0, []);
+  const parts = best.counts.map((n, j) => (n ? `${n} ${n === 1 ? foods[j].name : foods[j].plural}` : null)).filter(Boolean);
+  return { text: parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}` : parts[0], carbs: best.carbs };
+}
 
 const roundTo = (value, step) => Math.round(value / step) * step;
 const formatRange = ([low, high], unit) => (low === high ? `${low} ${unit}` : `${low}–${high} ${unit}`);
@@ -1144,11 +1187,24 @@ function renderNutrition(w) {
     timeline.append(item);
   });
   timeline.closest(".field-group").hidden = rows.length === 0;
+  // When the last feed is well before the finish, say why there's none after it
+  const finish = legWindows(w).at(-1)?.end ?? plan?.seconds;
+  const lastFeed = feeds.at(-1)?.time;
+  const lastStretch = plan && w.type !== "swim" && lastFeed != null && finish - lastFeed >= FEEDS.lastStretchNoteMinutes * 60;
   setResult("timelineNote", !plan ? "Add the duration on the Event page to see when to take what."
     : rows.length === 0 ? "No gels needed for this one."
     : `${count} × ${gel.name}, ${grams} g. Times from the start; −0:15 is 15 minutes before.`
+      + (lastStretch ? " No gel needed in the last stretch; it won't be absorbed in time." : "")
       + (limited ? ` Limited to ${max} a day, the label's maximum.` : "")
       + (gel.product ? "" : " Add your gels in Settings to use them here."));
+
+  // Totals: the target beside what's planned, which rounds to whole gels
+  const drinkMix = plan && w.type !== "swim" ? drinkMixCarbsPerHour(w).source : null;
+  const drinkGrams = drinkMix ? drinkMix.servings * drinkMix.product.carbs : 0;
+  const plannedParts = [count ? `${count} gel${count === 1 ? "" : "s"}` : null,
+    drinkMix ? `${drinkMix.servings} × ${productTitle(drinkMix.product)}` : null].filter(Boolean);
+  setResult("carbsPlanned", !plan || w.type === "swim" || plan.guidance.max === 0 || !plannedParts.length ? ""
+    : `${formatRange(plan.total, "g")} target · ${grams + drinkGrams} g planned (${plannedParts.join(" + ")})`);
 
   // From your products: servings of the gel (and any drink mix) in this plan
   const productOutputs = key => document.querySelectorAll(`#view-nutrition [data-result="${key}"]`);
@@ -1157,7 +1213,6 @@ function renderNutrition(w) {
     el.textContent = `${count} serving${count === 1 ? "" : "s"}, ${grams} g`;
     el.classList.add("is-set");
   });
-  const drinkMix = plan && w.type !== "swim" ? drinkMixCarbsPerHour(w).source : null;
   if (drinkMix) productOutputs(`servings-${drinkMix.product.id}`).forEach(el => {
     el.textContent = `${drinkMix.servings} serving${drinkMix.servings === 1 ? "" : "s"}, ${drinkMix.servings * drinkMix.product.carbs} g, in your bottles`;
     el.classList.add("is-set");
@@ -1167,15 +1222,35 @@ function renderNutrition(w) {
   document.querySelector("[data-needs-weight]").hidden = weight != null;
   const perKg = values => (weight == null ? null : values.map(v => roundTo(v * weight, 5)));
 
-  // Carb loading: sessions over 90 minutes only, tiered by length, per day with kcal
+  // Carb loading: sessions over 90 minutes only, tiered by length, per day with
+  // kcal; as an increase on a normal day when normal daily carbs are set
   const tier = plan && CARB_LOADING.find(t => plan.seconds > t.over && plan.seconds <= t.upTo);
   document.querySelector("[data-carb-loading]").hidden = !tier;
   if (tier) {
     const loading = perKg(tier.perKgPerDay);
-    setResult("loadPerDay", loading ? formatRange(loading, "g") : "– g", !!loading);
-    setResult("loadKcal", loading ? `${formatRange(loading.map(g => displayNumber(g * KCAL_PER_GRAM_CARB, 0)), "kcal")}` : "");
+    const kcal = loading ? formatRange(loading.map(g => displayNumber(g * KCAL_PER_GRAM_CARB, 0)), "kcal") : "";
+    const normal = fields.normalCarbs;
+    setResult("loadStatus", tier.status, tier.status === "Recommended");
+    if (loading && normal) {
+      const extra = loading.map(g => Math.max(0, roundTo(g - normal, 5)));
+      setResult("loadPerDayLabel", "On top of a normal day");
+      setResult("loadPerDay", `About +${formatRange(extra, "g")}`);
+      setResult("loadKcal", `${formatRange(loading, "g")} a day in all, ${kcal}`);
+    } else {
+      setResult("loadPerDayLabel", "Carbs a day");
+      setResult("loadPerDay", loading ? formatRange(loading, "g") : "– g", !!loading);
+      setResult("loadKcal", kcal);
+    }
     setResult("loadPerKg", formatRange(tier.perKgPerDay, "g/kg"), false);
     setResult("loadWhen", tier.when, false);
+    // The day as 3 meals and 2 snacks, from the middle of the range
+    const parts = LOAD_SPLIT.meals * LOAD_SPLIT.mealParts + LOAD_SPLIT.snacks * LOAD_SPLIT.snackParts;
+    const day = loading ? (loading[0] + loading[1]) / 2 : null;
+    setResult("loadSplit", day
+      ? `About ${roundTo(day * LOAD_SPLIT.mealParts / parts, 5)} g a meal and ${roundTo(day * LOAD_SPLIT.snackParts / parts, 5)} g a snack (${LOAD_SPLIT.meals} meals, ${LOAD_SPLIT.snacks} snacks)`
+      : "–", false);
+    setResult("loadNote", normal ? "Aim for a clear increase on your normal intake; mostly white carbs and drinks, less fibre."
+      : "Aim for a clear increase on your normal intake; mostly white carbs and drinks, less fibre. Add your normal daily carbs in Settings to see the increase.");
   }
 
   // Pre-race meal: 1 g/kg, up to 1 g/kg for each hour before (at most 4 g/kg),
@@ -1189,6 +1264,24 @@ function renderNutrition(w) {
   setResult("mealNote", `${hoursText} hours before the start (set in Settings): 1 g/kg, up to 1 g/kg for each hour before.`
     + (meal && w.type === "run" ? ` Runs: go for the lower end, about ${meal[0]} g.` : "")
     + (w.start ? "" : " Add a start time on the Event page for a clock time."));
+  // An example meal near the low end, and the carbs in some foods
+  const example = meal ? exampleMeal(meal[0]) : null;
+  setResult("mealExample", example ? `${example.text[0].toUpperCase()}${example.text.slice(1)}: about ${roundTo(example.carbs, 5)} g` : "–", false);
+  setResult("mealFoods", `Carbs, roughly: ${MEAL_FOODS.map(f => `${f.name} ${f.carbs} g`).join(" · ")}`);
+
+  // Caffeine (optional): 1–3 mg/kg about an hour before the start, from a
+  // product with caffeine, only if you've tried it in training
+  const caffeinated = settings.products.find(p => p.caffeine > 0);
+  document.querySelector("[data-caffeine]").hidden = !caffeinated;
+  if (caffeinated) {
+    const mg = perKg(CAFFEINE.perKg);
+    setResult("caffeineWhen", w.start ? timeOfDayMinus(w.start, CAFFEINE.minutesBefore / 60) : "60 min before the start", !!w.start);
+    setResult("caffeineMg", mg ? formatRange(mg, "mg") : "– mg", !!mg);
+    const servings = mg ? [Math.max(1, Math.round(mg[0] / caffeinated.caffeine)), Math.max(1, Math.floor(mg[1] / caffeinated.caffeine))] : null;
+    setResult("caffeineFrom", servings
+      ? `${servings[0] === servings[1] ? servings[0] : servings.join("–")} × ${productTitle(caffeinated)} (${displayNumber(caffeinated.caffeine, 0)} mg each)`
+      : productTitle(caffeinated), false);
+  }
 
   // Recovery: stressed when training again within about 8 hours
   const soon = settings.workoutMode === "training" && w.nextSoon === "yes";
