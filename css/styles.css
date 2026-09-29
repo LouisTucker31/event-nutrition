@@ -151,7 +151,7 @@ input, textarea { caret-color: var(--accent); }   /* an accent-coloured text cur
    Ready's race line), then worked-out values */
 .race-line { color: var(--muted); font-size: 0.95rem; margin-bottom: 4px; }
 .race-line[hidden] { display: none; }
-.race-line strong { color: var(--text); font-weight: 600; }
+.race-line strong { display: block; color: var(--text); font-weight: 600; }  /* the name, with the details on the line below */
 .plan-empty { margin-top: 8px; }
 .text-button--accent { color: var(--accent); padding: 0 2px; font-size: inherit; }
 .computed-field--hero output { font-size: 1.4rem; font-weight: 600; }

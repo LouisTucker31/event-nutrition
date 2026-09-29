@@ -1126,13 +1126,16 @@ function renderPlans() {
     line.textContent = "";
     line.hidden = !hasEvent;
     if (!hasEvent) return;
-    // e.g. "Weymouth Triathlon · Race · 2:44:30 · 13 Jun 27"
+    // e.g. "Weymouth Triathlon", then "Race · 2:44:30 · 13 Jun 27" on the line below
     const title = document.createElement("strong");
     title.textContent = w.name?.trim() || WORKOUT_TYPE_NAMES[w.type];
     const rest = [settings.workoutMode === "race" ? "Race" : "Training"];
     if (seconds) rest.push(formatHMS(seconds));
     if (w.date) rest.push(formatShortDate(w.date));
-    line.append(title, ` · ${rest.join(" · ")}`);
+    const details = document.createElement("span");
+    details.className = "race-line__details";
+    details.textContent = rest.join(" · ");
+    line.append(title, details);
   });
   document.querySelectorAll("[data-plan-empty]").forEach(note => { note.hidden = hasEvent; });
   document.querySelectorAll("[data-swim-plan-note]").forEach(note => { note.hidden = w.type !== "swim"; });
