@@ -1,10 +1,12 @@
 # Race Nutrition
 
-The empty shell of a new app in the same series as the
-[triathlon packing list](https://louistucker31.github.io/triathlon-prep/): an
-installable web app (PWA) with plain HTML, CSS and JavaScript, and no build step.
-It has three pages and a settings pop-up, all blank, with the same floating
-glass tab bar and settings button as the triathlon app.
+Race-day fuelling for endurance athletes, a sister app to
+[Race Ready](https://louistucker31.github.io/triathlon-prep/): an installable
+web app (PWA) with plain HTML, CSS and JavaScript, and no build step. It has the
+same floating glass tab bar, settings pop-up and styling as Race Ready, with a
+clay accent in place of Race Ready's green.
+
+Live: https://louistucker31.github.io/event-nutrition/
 
 ## Structure
 
@@ -28,38 +30,46 @@ assets/icons/
   full-screen pop-up over everything, including the nav, whose close button
   sits exactly where the cog was. Escape also closes it. The browser tab title
   follows the page, e.g. "Page 2 – Race Nutrition".
-- **Theme:** light, dark or system, applied before first paint. There's no
-  picker yet; add buttons with `data-theme-choice="light|dark|system"` (as in
-  the triathlon app's Appearance section) and `main.js` wires them up.
+- **Settings page**, in this order:
+  - *My details:* sex, age, weight and height.
+  - *Sweat profile:* how much you sweat compared with others, or a measured
+    sweat rate (with a fold-out sweat test that works it out); the six
+    salty-sweater signs, which give a saltiness band (0–1 ticked low, 2–3
+    average, 4–6 high), or a lab sweat-sodium result in mg/L, which overrides them.
+  - *Gut training:* the most carbs per hour you're used to, which will cap the
+    carb target.
+  - *My products:* gels, drink mixes, electrolyte tabs, chews and bars, each
+    with carbs and sodium per serving (and the water it's mixed with, for
+    drinks and tabs).
+  - *Units* (kg, cm or lb, ft in; ml or US fl oz), *Appearance* (light, dark or
+    system) and *Clear my details*, which keeps units and appearance.
+- **Units:** numbers are stored metric (kg, cm, ml, L/h) and converted for
+  display, so switching units back and forth never changes a value.
 - **PWA:** installs to the home screen, works offline, checks for an update on
   every resume and reloads to a new version only when the app isn't in use.
-- The shared form styles (`.settings-heading`, `.field-group`, `.field`,
-  `.field-row`, `.segmented`, `.settings-note`, `.button-danger`, `.confirm`)
-  are kept in `styles.css`, ready for page content.
 
-## Before publishing
+## Still to do
 
-1. **Name.** Replace "New app" in `index.html` (`<title>`,
-   `apple-mobile-web-app-title`), `manifest.webmanifest` and `APP_TITLE` in
-   `js/main.js`.
-2. **Storage and cache prefix.** Every app on `louistucker31.github.io` shares
-   one localStorage and one set of service-worker caches. This app uses the
-   prefix `race-nutrition-`. Change it in three places, all to the same new prefix:
-   `STORAGE_KEYS` in `js/main.js`, the key in `js/theme.js`, and `PREFIX` in
-   `sw.js`. Never use `tri-`, which belongs to the triathlon app.
-3. **Tabs.** Rename the tab labels and page headings in `index.html`, and the
-   view ids (`view-page1`…) with `VIEWS` in `js/main.js`, keeping the same
-   order as the tabs. The tab icons are the triathlon app's (bag, checklist,
-   calendar) as placeholders; swap them for Material Symbols Rounded.
+- **Tabs.** Rename the tab labels and page headings in `index.html`, and the
+  view ids (`view-page1`…) with `VIEWS` in `js/main.js`, keeping the same
+  order as the tabs. The tab icons are the triathlon app's (bag, checklist,
+  calendar) as placeholders; swap them for Material Symbols Rounded.
+
+Every app on `louistucker31.github.io` shares one localStorage and one set of
+service-worker caches, so this app's keys and caches start with
+`race-nutrition-` (`STORAGE_KEYS` in `js/main.js`, the key in `js/theme.js`
+and `PREFIX` in `sw.js`). Never use `tri-`, which belongs to Race Ready.
 
 After changing any file, bump `VERSION` in `sw.js` if you want installed copies
 to drop their old cache straight away (they update on next launch either way).
 
 ## Data and privacy
 
-Anything the app saves (currently only the theme and the last page used) stays
-in this browser's localStorage on this device. No analytics, tracking, cookies
-or third-party scripts.
+Everything you enter (your details, sweat profile, gut training, products,
+units and theme) and the last page used stay in this browser's localStorage on
+this device. Nothing is sent to a server. "Clear my details" in settings
+removes your details and products. No analytics, tracking, cookies or
+third-party scripts.
 
 ## Security
 

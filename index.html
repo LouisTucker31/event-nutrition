@@ -54,6 +54,170 @@
       <span class="lg-button__icon"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M480-438 270-228q-9 9-21 9t-21-9q-9-9-9-21t9-21l210-210-210-210q-9-9-9-21t9-21q9-9 21-9t21 9l210 210 210-210q9-9 21-9t21 9q9 9 9 21t-9 21L522-480l210 210q9 9 9 21t-9 21q-9 9-21 9t-21-9L480-438Z"/></svg></span>
     </button>
 
+      <!-- Number boxes store metric values (kg, cm, ml, L/h); data-convert says how
+           to show them in the units chosen below. See UNIT_CONVERSIONS in main.js. -->
+      <h2 class="settings-heading">My details</h2>
+      <div class="field-group">
+        <div class="field-row">
+          <label class="field"><span>Sex</span>
+            <select data-key="sex">
+              <option value="">Select</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
+          </label>
+          <label class="field"><span>Age<span class="sr-only"> in years</span></span><span class="unit-field"><input data-key="age" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">years</span></span></label>
+        </div>
+        <div class="field-row">
+          <label class="field"><span>Weight</span><span class="unit-field"><input data-key="weight" data-convert="weight" data-format="number" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span class="unit-field__unit" data-unit-label="weight"></span></span></label>
+          <!-- Height is one box in cm, or two (feet and inches) in imperial units -->
+          <div class="field" id="heightField"><span id="heightLabel">Height</span>
+            <span class="unit-field" data-units="metric"><input id="heightCm" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off" aria-labelledby="heightLabel heightCmUnit"><span class="unit-field__unit" id="heightCmUnit">cm</span></span>
+            <span class="unit-field" data-units="imperial" hidden><input id="heightFt" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off" aria-labelledby="heightLabel heightFtUnit"><span class="unit-field__unit" id="heightFtUnit">ft</span><input id="heightIn" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off" aria-labelledby="heightLabel heightInUnit"><span class="unit-field__unit" id="heightInUnit">in</span></span>
+          </div>
+        </div>
+      </div>
+      <p class="settings-note">Weight sets your carb and fluid targets. Age, sex and height are for carb loading, pre-race meals and recovery, which are worked out per kg of body weight.</p>
+
+      <h2 class="settings-heading">Sweat profile</h2>
+      <h3 class="settings-subheading">How much you sweat</h3>
+      <div class="field-group">
+        <label class="field"><span>Compared with other people</span>
+          <select data-key="sweatLevel">
+            <option value="">Select</option>
+            <option value="less">Less than most</option>
+            <option value="average">About average</option>
+            <option value="more">More than most</option>
+          </select>
+        </label>
+        <label class="field"><span>Measured sweat rate (optional)</span><span class="unit-field"><input data-key="sweatRate" data-convert="rate" data-format="number" type="text" inputmode="decimal" placeholder="Use the test below" autocomplete="off"><span class="unit-field__unit" data-unit-label="rate"></span></span></label>
+      </div>
+      <p class="settings-note">A measured rate is used in place of your answer above.</p>
+
+      <div class="disclosure" id="sweatTest">
+        <h4><button type="button" class="disclosure__toggle" aria-expanded="false" aria-controls="sweatTestBody"><span class="disclosure__chevron" aria-hidden="true">▶</span><span class="disclosure__title">How to measure your sweat rate</span></button></h4>
+        <div class="disclosure__body" id="sweatTestBody">
+          <ol class="steps">
+            <li>Go to the toilet, then weigh yourself naked and dry.</li>
+            <li>Train for about an hour at race effort, in conditions like race day. Note how much you drink.</li>
+            <li>Towel off and weigh yourself naked again, before you drink or go to the toilet.</li>
+          </ol>
+          <div class="field-group">
+            <div class="field-row">
+              <label class="field"><span>Weight before</span><span class="unit-field"><input data-key="testBefore" data-convert="weight" data-format="number" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span class="unit-field__unit" data-unit-label="weight"></span></span></label>
+              <label class="field"><span>Weight after</span><span class="unit-field"><input data-key="testAfter" data-convert="weight" data-format="number" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span class="unit-field__unit" data-unit-label="weight"></span></span></label>
+            </div>
+            <div class="field-row">
+              <label class="field"><span>Drank</span><span class="unit-field"><input data-key="testDrank" data-convert="volume" data-format="number" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span class="unit-field__unit" data-unit-label="volume"></span></span></label>
+              <label class="field"><span>Session<span class="sr-only"> length in minutes</span></span><span class="unit-field"><input data-key="testMinutes" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="60" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">min</span></span></label>
+            </div>
+            <div class="field computed-field"><span id="testResultLabel">Your sweat rate</span><output id="testResult" aria-labelledby="testResultLabel">–</output></div>
+          </div>
+          <button type="button" class="button-secondary" id="useTestResult" disabled>Use this as my sweat rate</button>
+        </div>
+      </div>
+
+      <h3 class="settings-subheading">How salty your sweat is</h3>
+      <div class="field-group">
+        <fieldset class="check-list" id="saltySigns">
+          <legend class="sr-only">Signs you're a salty sweater (tick any that apply)</legend>
+          <label class="check-item"><input type="checkbox" data-salty-sign="0"><span>White, salty marks on your kit or hat after training</span></label>
+          <label class="check-item"><input type="checkbox" data-salty-sign="1"><span>Sweat stings your eyes or any cuts</span></label>
+          <label class="check-item"><input type="checkbox" data-salty-sign="2"><span>Your sweat tastes salty</span></label>
+          <label class="check-item"><input type="checkbox" data-salty-sign="3"><span>You crave salty food after long or hot sessions</span></label>
+          <label class="check-item"><input type="checkbox" data-salty-sign="4"><span>You get cramp in long or hot sessions</span></label>
+          <label class="check-item"><input type="checkbox" data-salty-sign="5"><span>You feel wiped out or get headaches after long sessions in the heat</span></label>
+        </fieldset>
+        <label class="field"><span>Lab sweat test (optional)</span><span class="unit-field"><input data-key="sweatSodium" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="Sodium from a sweat test" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">mg/L</span></span></label>
+        <div class="field computed-field"><span id="saltBandLabel">Your saltiness</span><output id="saltBand" aria-labelledby="saltBandLabel" aria-live="polite">–</output></div>
+      </div>
+      <p class="settings-note">Tick any that apply. A lab result is used in place of the ticks.</p>
+
+      <h2 class="settings-heading">Gut training</h2>
+      <div class="field-group">
+        <label class="field"><span>Most carbs per hour you're used to</span><span class="unit-field"><input data-key="gutCarbs" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="e.g. 60" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">g/h</span></span></label>
+      </div>
+      <p class="settings-note">Your carb target never goes above this, so you won't be told to take 90 g an hour if you've only practised 40. Raise it as your gut adapts.</p>
+
+      <h2 class="settings-heading">My products</h2>
+      <div id="productList"></div>
+      <p class="settings-note" id="productsEmpty">Add your gels, drink mixes and electrolyte tabs, so plans can say “1 gel every 25 min” rather than just grams.</p>
+      <button type="button" class="button-secondary products-add" id="addProduct"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M479.825-200Q467-200 458.5-208.625T450-230v-220H230q-12.75 0-21.375-8.675-8.625-8.676-8.625-21.5 0-12.825 8.625-21.325T230-510h220v-220q0-12.75 8.675-21.375 8.676-8.625 21.5-8.625 12.825 0 21.325 8.625T510-730v220h220q12.75 0 21.375 8.675 8.625 8.676 8.625 21.5 0 12.825-8.625 21.325T730-450H510v220q0 12.75-8.675 21.375-8.676 8.625-21.5 8.625Z"/></svg>Add a product</button>
+
+      <!-- One card per product, copied from this template by main.js -->
+      <template id="productTemplate">
+        <div class="product">
+          <div class="product__heading">
+            <h3 class="settings-subheading product__title"></h3>
+            <button type="button" class="text-button text-button--danger product__remove">Remove</button>
+          </div>
+          <div class="field-group">
+            <label class="field"><span>Name</span><input data-product-key="name" type="text" autocapitalize="words" placeholder="e.g. PF 30 Gel" autocomplete="off"></label>
+            <label class="field"><span>Type</span>
+              <select data-product-key="type">
+                <option value="gel">Gel</option>
+                <option value="drink">Drink mix</option>
+                <option value="tab">Electrolyte tab</option>
+                <option value="chew">Chews</option>
+                <option value="bar">Bar</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <!-- Drink mixes and tabs only: how much water one serving makes up -->
+            <label class="field" data-product-types="drink tab"><span>Mixed with</span><span class="unit-field"><input data-product-key="volume" data-convert="volume" data-format="number" type="text" inputmode="decimal" placeholder="e.g. 500" autocomplete="off"><span class="unit-field__unit" data-unit-label="volume"></span></span></label>
+            <div class="field-row">
+              <label class="field"><span>Carbs<span class="sr-only"> per serving in grams</span></span><span class="unit-field"><input data-product-key="carbs" data-format="number" data-decimals="1" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">g</span></span></label>
+              <label class="field"><span>Sodium<span class="sr-only"> per serving in milligrams</span></span><span class="unit-field"><input data-product-key="sodium" data-format="number" data-decimals="0" type="text" inputmode="numeric" placeholder="0" autocomplete="off"><span class="unit-field__unit" aria-hidden="true">mg</span></span></label>
+            </div>
+          </div>
+          <p class="settings-note">Per serving: one gel, sachet, tab, bar or pack of chews.</p>
+        </div>
+      </template>
+
+      <h2 class="settings-heading">Units</h2>
+      <h3 class="settings-subheading">Weight and height</h3>
+      <div class="segmented" role="group" aria-label="Weight and height units">
+        <button type="button" data-unit-choice="body" data-value="metric">kg, cm</button>
+        <button type="button" data-unit-choice="body" data-value="imperial">lb, ft in</button>
+      </div>
+      <h3 class="settings-subheading">Fluids</h3>
+      <div class="segmented" role="group" aria-label="Fluid units">
+        <button type="button" data-unit-choice="fluid" data-value="metric">ml</button>
+        <button type="button" data-unit-choice="fluid" data-value="imperial">fl oz</button>
+      </div>
+
+      <h2 class="settings-heading">Appearance</h2>
+      <div class="segmented" role="group" aria-label="Theme">
+        <button type="button" data-theme-choice="light">Light</button>
+        <button type="button" data-theme-choice="dark">Dark</button>
+        <button type="button" data-theme-choice="system">System</button>
+      </div>
+      <p class="settings-note">System follows your phone's light or dark setting.</p>
+
+      <h2 class="settings-heading">Reset</h2>
+      <button type="button" class="button-danger" id="resetApp">Clear my details</button>
+      <p class="settings-note">Clears everything above except units and appearance.</p>
+
+      <p class="save-note">Changes save automatically on this device</p>
+
+      <dialog class="confirm" id="resetDialog" aria-labelledby="resetTitle" aria-describedby="resetDesc">
+        <h2 id="resetTitle" tabindex="-1" autofocus>Clear my details?</h2>
+        <p id="resetDesc">This clears your details, sweat profile, gut training and products. Units and appearance stay. You can't undo this.</p>
+        <div class="confirm__actions">
+          <button type="button" class="confirm__cancel" id="resetCancel">Keep everything</button>
+          <button type="button" class="confirm__ok" id="resetConfirm">Clear</button>
+        </div>
+      </dialog>
+
+      <dialog class="confirm" id="removeProductDialog" aria-labelledby="removeProductTitle" aria-describedby="removeProductDesc">
+        <h2 id="removeProductTitle" tabindex="-1" autofocus>Remove this product?</h2>
+        <p id="removeProductDesc">You can't undo this.</p>
+        <div class="confirm__actions">
+          <button type="button" class="confirm__cancel" id="removeProductCancel">Keep it</button>
+          <button type="button" class="confirm__ok" id="removeProductConfirm">Remove</button>
+        </div>
+      </dialog>
+
   </div>
 </dialog>
 

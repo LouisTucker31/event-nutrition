@@ -20,6 +20,9 @@ const STORAGE_KEYS = { settings: "race-nutrition-settings-v1", view: "race-nutri
 // Settings
 const settings = storage.read(STORAGE_KEYS.settings, {});
 settings.theme = settings.theme || "light";
+settings.fields = settings.fields || {};      // my details, sweat profile, gut training (metric numbers)
+settings.products = settings.products || [];  // my products, in the order added
+settings.units = { body: "metric", fluid: "metric", ...settings.units };
 const saveSettings = () => storage.write(STORAGE_KEYS.settings, settings);
 
 // Focus outlines on boxes are for keyboard users only: Tab turns them on,
@@ -102,6 +105,269 @@ document.getElementById("closeSettings").addEventListener("click", () => {
 // Escape fires "cancel" then "close"; either restores the title (it is harmless twice)
 settingsDialog.addEventListener("cancel", restoreTitle);
 settingsDialog.addEventListener("close", restoreTitle);
+
+// Number boxes (data-format="number") format as you type: digits and one decimal
+// point, with commas for thousands (1,500). data-decimals limits the decimal
+// places (default 2; 0 allows whole numbers only).
+function formatNumber(raw, decimals = 2) {
+  let digits = raw.replace(/[^\d.]/g, "");
+  if (decimals === 0) digits = digits.replace(/\./g, "");
+  const dot = digits.indexOf(".");
+  if (dot !== -1) digits = digits.slice(0, dot + 1) + digits.slice(dot + 1).replace(/\./g, "");
+  let [whole, fraction] = digits.split(".");
+  whole = whole.replace(/^0+(?=\d)/, "").slice(0, 7).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return fraction === undefined ? whole : `${whole || "0"}.${fraction.slice(0, decimals)}`;
+}
+const decimalsFor = input => Number(input.dataset.decimals ?? 2);
+// A box's text as a number, or null when it's empty
+function parseNumber(text) {
+  const value = parseFloat(text.replace(/,/g, ""));
+  return Number.isFinite(value) ? value : null;
+}
+// A stored number as box text, rounded to the box's decimal places (1.50 -> "1.5")
+const displayNumber = (value, decimals) => formatNumber(String(Number(value.toFixed(decimals))), decimals);
+
+function formatAsYouType(input) {
+  input.addEventListener("input", () => {
+    const before = input.value;
+    const after = formatNumber(before, decimalsFor(input));
+    if (after === before) return;
+    // Keep the caret after the same digit it was after
+    const caret = input.selectionStart ?? before.length;
+    const keptLeftOfCaret = before.slice(0, caret).replace(/[^\d.]/g, "").length;
+    input.value = after;
+    let pos = 0, seen = 0;
+    while (pos < after.length && seen < keptLeftOfCaret) { if (/[\d.]/.test(after[pos])) seen++; pos++; }
+    input.setSelectionRange(pos, pos);
+  }, { capture: true }); // before the save handlers, so the formatted value is what's saved
+}
+document.querySelectorAll("#settingsDialog [data-format]").forEach(formatAsYouType);
+
+// Units. Everything is stored metric (kg, cm, ml, L/h) and converted for display,
+// so switching units never loses precision. data-convert on a box names its
+// conversion; "body" units cover weight and height, "fluid" units cover volumes
+// and sweat rate. fl oz are US fluid ounces (29.57 ml), as on most product labels.
+const ML_PER_FL_OZ = 29.5735;
+const UNIT_CONVERSIONS = {
+  weight: { units: "body", metric: { label: "kg", factor: 1, decimals: 1 }, imperial: { label: "lb", factor: 2.20462, decimals: 1 } },
+  volume: { units: "fluid", metric: { label: "ml", factor: 1, decimals: 0 }, imperial: { label: "fl oz", factor: 1 / ML_PER_FL_OZ, decimals: 1 } },
+  rate: { units: "fluid", metric: { label: "L/h", factor: 1, decimals: 2 }, imperial: { label: "fl oz/h", factor: 1000 / ML_PER_FL_OZ, decimals: 1 } }
+};
+const unitFor = kind => UNIT_CONVERSIONS[kind][settings.units[UNIT_CONVERSIONS[kind].units]];
+const toDisplay = (kind, value) => value * unitFor(kind).factor;
+const fromDisplay = (kind, value) => value / unitFor(kind).factor;
+const formatWithUnit = (kind, value) => `${displayNumber(toDisplay(kind, value), unitFor(kind).decimals)} ${unitFor(kind).label}`;
+
+// Show a stored value in its box, in the current units
+function fillNumberBox(input, value) {
+  const kind = input.dataset.convert;
+  if (kind) input.dataset.decimals = unitFor(kind).decimals;
+  input.value = value == null ? "" : displayNumber(kind ? toDisplay(kind, value) : value, decimalsFor(input));
+}
+// A box's value to store: a metric number, or undefined when empty
+function readNumberBox(input) {
+  const value = parseNumber(input.value);
+  if (value === null) return undefined;
+  return input.dataset.convert ? fromDisplay(input.dataset.convert, value) : value;
+}
+const setOrDelete = (object, key, value) => { if (value === undefined || value === "") delete object[key]; else object[key] = value; };
+
+// Settings fields (data-key): selects save their value, number boxes a metric number
+const fields = settings.fields;
+const fieldInputs = [...document.querySelectorAll("#settingsDialog [data-key]")];
+fieldInputs.forEach(input => input.addEventListener("input", () => {
+  setOrDelete(fields, input.dataset.key, input.dataset.format ? readNumberBox(input) : input.value);
+  saveSettings();
+  updateSweatTest();
+  updateSaltBand();
+}));
+
+// Height: one box in cm, or feet and inches
+const heightInputs = { cm: document.getElementById("heightCm"), ft: document.getElementById("heightFt"), in: document.getElementById("heightIn") };
+const CM_PER_INCH = 2.54;
+function fillHeight() {
+  const imperial = settings.units.body === "imperial";
+  document.querySelectorAll("#heightField [data-units]").forEach(box => { box.hidden = box.dataset.units !== settings.units.body; });
+  Object.values(heightInputs).forEach(input => { input.value = ""; });
+  if (fields.height == null) return;
+  if (!imperial) { heightInputs.cm.value = String(Math.round(fields.height)); return; }
+  const inches = Math.round(fields.height / CM_PER_INCH);
+  heightInputs.ft.value = String(Math.floor(inches / 12));
+  heightInputs.in.value = String(inches % 12);
+}
+heightInputs.cm.addEventListener("input", () => {
+  setOrDelete(fields, "height", parseNumber(heightInputs.cm.value) ?? undefined);
+  saveSettings();
+});
+[heightInputs.ft, heightInputs.in].forEach(input => input.addEventListener("input", () => {
+  const ft = parseNumber(heightInputs.ft.value), inches = parseNumber(heightInputs.in.value);
+  setOrDelete(fields, "height", ft === null && inches === null ? undefined : ((ft ?? 0) * 12 + (inches ?? 0)) * CM_PER_INCH);
+  saveSettings();
+}));
+
+// Sweat test: sweat rate = (weight before - weight after + fluid drunk) / hours,
+// taking 1 kg of weight lost as 1 litre of sweat
+const sweatTest = document.getElementById("sweatTest");
+const sweatTestToggle = sweatTest.querySelector(".disclosure__toggle");
+sweatTestToggle.addEventListener("click", () => {
+  const open = sweatTest.classList.toggle("is-open");
+  sweatTestToggle.setAttribute("aria-expanded", String(open));
+});
+const testResult = document.getElementById("testResult");
+const useTestResult = document.getElementById("useTestResult");
+let testRate = null; // L/h, once the test boxes give a sensible answer
+function updateSweatTest() {
+  const { testBefore, testAfter, testDrank = 0, testMinutes } = fields;
+  testRate = null;
+  if (testBefore != null && testAfter != null && testMinutes > 0) {
+    const rate = (testBefore - testAfter + testDrank / 1000) / (testMinutes / 60);
+    if (rate > 0 && rate < 5) testRate = rate; // outside this, a number is probably mistyped
+  }
+  const filledIn = testBefore != null || testAfter != null;
+  testResult.textContent = testRate !== null ? formatWithUnit("rate", testRate) : filledIn ? "Check the numbers above" : "–";
+  testResult.classList.toggle("is-set", testRate !== null);
+  useTestResult.disabled = testRate === null;
+}
+useTestResult.addEventListener("click", () => {
+  fields.sweatRate = testRate;
+  saveSettings();
+  fillNumberBox(document.querySelector('[data-key="sweatRate"]'), fields.sweatRate);
+});
+
+// Saltiness band: from a lab result if there is one, otherwise from how many of
+// the six salty-sweater signs are ticked (0-1 low, 2-3 average, 4-6 high).
+// Bands are sweat sodium in mg per litre.
+const SALT_BANDS = [
+  { name: "Low", range: "under 700 mg/L", below: 700, minSigns: 0 },
+  { name: "Average", range: "700–1,200 mg/L", below: 1200, minSigns: 2 },
+  { name: "High", range: "over 1,200 mg/L", below: Infinity, minSigns: 4 }
+];
+const saltSignInputs = [...document.querySelectorAll("[data-salty-sign]")];
+const saltBand = document.getElementById("saltBand");
+function updateSaltBand() {
+  const signs = fields.saltySigns || [];
+  if (fields.sweatSodium != null) {
+    const band = SALT_BANDS.find(b => fields.sweatSodium < b.below);
+    saltBand.textContent = `${band.name} (${displayNumber(fields.sweatSodium, 0)} mg/L, from your lab test)`;
+  } else {
+    const band = SALT_BANDS.findLast(b => signs.length >= b.minSigns);
+    saltBand.textContent = `${band.name} (${band.range})`;
+  }
+  saltBand.classList.toggle("is-set", fields.sweatSodium != null || signs.length > 0);
+}
+saltSignInputs.forEach(input => input.addEventListener("change", () => {
+  setOrDelete(fields, "saltySigns", saltSignInputs.filter(box => box.checked).map(box => Number(box.dataset.saltySign)));
+  if (fields.saltySigns?.length === 0) delete fields.saltySigns;
+  saveSettings();
+  updateSaltBand();
+}));
+
+// My products: one card each, from the template in index.html. Carbs (g) and
+// sodium (mg) are per serving; drink mixes and tabs also store the water one
+// serving is mixed with (ml).
+const productList = document.getElementById("productList");
+const productTemplate = document.getElementById("productTemplate");
+const productsEmpty = document.getElementById("productsEmpty");
+const productTitle = product => product.name?.trim() || "New product";
+let productToRemove = null;
+
+function renderProducts() {
+  productList.textContent = "";
+  productsEmpty.hidden = settings.products.length > 0;
+  settings.products.forEach(product => {
+    const card = productTemplate.content.firstElementChild.cloneNode(true);
+    const title = card.querySelector(".product__title");
+    const removeButton = card.querySelector(".product__remove");
+    const showTitle = () => {
+      title.textContent = productTitle(product);
+      removeButton.setAttribute("aria-label", `Remove ${productTitle(product)}`);
+    };
+    showTitle();
+    const showTypeFields = () => card.querySelectorAll("[data-product-types]").forEach(field => {
+      field.hidden = !field.dataset.productTypes.split(" ").includes(product.type);
+    });
+    card.querySelectorAll("[data-product-key]").forEach(input => {
+      const key = input.dataset.productKey;
+      if (input.dataset.format) { formatAsYouType(input); fillNumberBox(input, product[key]); }
+      else input.value = product[key] ?? "";
+      input.addEventListener("input", () => {
+        setOrDelete(product, key, input.dataset.format ? readNumberBox(input) : input.value);
+        saveSettings();
+        if (key === "name") showTitle();
+        if (key === "type") showTypeFields();
+      });
+    });
+    showTypeFields();
+    card.querySelectorAll("[data-unit-label]").forEach(label => { label.textContent = unitFor(label.dataset.unitLabel).label; });
+    removeButton.addEventListener("click", () => {
+      const hasDetails = Object.keys(product).some(key => !["id", "type"].includes(key));
+      if (!hasDetails) return removeProduct(product);
+      productToRemove = product;
+      document.getElementById("removeProductTitle").textContent = `Remove ${productTitle(product)}?`;
+      removeProductDialog.showModal();
+    });
+    productList.append(card);
+  });
+}
+function removeProduct(product) {
+  settings.products = settings.products.filter(p => p !== product);
+  saveSettings();
+  renderProducts();
+  document.getElementById("addProduct").focus();
+}
+document.getElementById("addProduct").addEventListener("click", () => {
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  settings.products.push({ id, type: "gel" });
+  saveSettings();
+  renderProducts();
+  const nameInput = productList.lastElementChild.querySelector('[data-product-key="name"]');
+  nameInput.focus();
+  nameInput.scrollIntoView({ block: "center", behavior: "smooth" });
+});
+const removeProductDialog = document.getElementById("removeProductDialog");
+document.getElementById("removeProductCancel").addEventListener("click", () => removeProductDialog.close());
+removeProductDialog.addEventListener("click", e => { if (e.target === removeProductDialog) removeProductDialog.close(); }); // tap outside
+document.getElementById("removeProductConfirm").addEventListener("click", () => {
+  removeProductDialog.close();
+  if (productToRemove) removeProduct(productToRemove);
+  productToRemove = null;
+});
+
+// Fill every box from storage, in the current units (on load, after a units
+// change and after clearing)
+function renderSettings() {
+  fieldInputs.forEach(input => {
+    if (input.dataset.format) fillNumberBox(input, fields[input.dataset.key]);
+    else input.value = fields[input.dataset.key] ?? "";
+  });
+  fillHeight();
+  saltSignInputs.forEach(box => { box.checked = (fields.saltySigns || []).includes(Number(box.dataset.saltySign)); });
+  document.querySelectorAll("[data-unit-choice]").forEach(button =>
+    button.setAttribute("aria-pressed", String(settings.units[button.dataset.unitChoice] === button.dataset.value)));
+  document.querySelectorAll("[data-unit-label]").forEach(label => { label.textContent = unitFor(label.dataset.unitLabel).label; });
+  renderProducts(); // product cards fill in their own unit labels
+  updateSweatTest();
+  updateSaltBand();
+}
+document.querySelectorAll("[data-unit-choice]").forEach(button => button.addEventListener("click", () => {
+  settings.units[button.dataset.unitChoice] = button.dataset.value;
+  saveSettings();
+  renderSettings();
+}));
+renderSettings();
+
+// Clear my details: everything on the settings page except units and theme
+const resetDialog = document.getElementById("resetDialog");
+document.getElementById("resetApp").addEventListener("click", () => resetDialog.showModal());
+document.getElementById("resetCancel").addEventListener("click", () => resetDialog.close());
+resetDialog.addEventListener("click", e => { if (e.target === resetDialog) resetDialog.close(); }); // tap outside
+document.getElementById("resetConfirm").addEventListener("click", () => {
+  Object.keys(fields).forEach(key => delete fields[key]);
+  settings.products = [];
+  saveSettings();
+  renderSettings();
+  resetDialog.close();
+});
 
 // PWA: register the service worker (needs http(s), so skipped on file://)
 if ("serviceWorker" in navigator && location.protocol !== "file:") {

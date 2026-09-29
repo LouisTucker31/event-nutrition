@@ -61,7 +61,7 @@ input, select, textarea { font-size: max(var(--input-size), 1em) !important; }
 input, textarea { caret-color: var(--accent); }   /* an accent-coloured text cursor, as iOS tints it */
 
 /* Shared form styles for the series: headed groups of fields, as in the
-   triathlon app's Events and Settings pages. Unused until pages get content. */
+   triathlon app's Events and Settings pages. */
 .settings-heading { font-size: 0.9rem; font-weight: 600;
              color: var(--muted-2); margin: 24px 4px 8px; }
 .settings-heading:first-of-type { margin-top: 16px; }
@@ -107,6 +107,66 @@ input, textarea { caret-color: var(--accent); }   /* an accent-coloured text cur
   display: block; width: 100%; padding: 12px var(--gutter); border: 1px solid var(--border); border-radius: var(--radius);
   background: var(--field); color: var(--danger); font: inherit; font-weight: 600; cursor: pointer;
 }
+.button-secondary {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px;
+  padding: 12px var(--gutter); border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--field); color: var(--text); font: inherit; font-weight: 600; cursor: pointer;
+}
+.button-secondary svg { width: 20px; height: 20px; fill: var(--accent); flex: none; }
+.button-secondary:disabled { color: var(--faint); cursor: default; }
+
+/* Items within a settings section, e.g. each product under My products */
+.settings-subheading { font-size: 0.8rem; font-weight: 500; color: var(--muted-2); margin: 12px 4px 6px; }
+.settings-heading + .settings-subheading { margin-top: 0; }
+
+/* Number box with a unit after it */
+.field > .unit-field { display: flex; align-items: center; gap: 4px; margin: 0; font-size: inherit; color: inherit; }
+.field > .unit-field[hidden] { display: none; }
+.unit-field input { flex: 1; min-width: 0; }
+.unit-field__unit { color: var(--muted-2); font-size: var(--input-size); }
+.unit-field__unit + input { margin-left: 12px; }   /* feet, then inches */
+
+/* Worked-out values (sweat rate from the test, saltiness): read-only */
+.computed-field output { display: block; min-height: 26px; font-size: max(var(--input-size), 1rem); color: var(--text); }
+.computed-field output.is-set { color: var(--accent); font-weight: 600; }   /* accent once worked out */
+
+/* Tick boxes inside a field group (salty-sweater signs) */
+.check-list { margin: 0; padding: 4px var(--gutter); border: 0; border-bottom: 1px solid var(--line); min-width: 0; }
+label.check-item {
+  display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; cursor: pointer;
+  border-bottom: 1px solid var(--line); -webkit-tap-highlight-color: transparent;
+}
+label.check-item:last-child { border-bottom: 0; }
+input[type=checkbox] { width: 18px; height: 18px; margin: 1px 0 0; flex-shrink: 0; accent-color: var(--check); cursor: pointer; }
+
+/* Fold-out section (the sweat test), styled like the triathlon app's checklist sections */
+.disclosure { border: 1px solid var(--border); border-radius: var(--radius-sm); margin-top: 12px; overflow: hidden; }
+.disclosure > h4 { margin: 0; font: inherit; }
+.disclosure__toggle {
+  width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px var(--gutter);
+  background: var(--head); border: 0; font: inherit; text-align: left; cursor: pointer; color: var(--text);
+}
+.disclosure__toggle:focus-visible { outline-offset: -2px; border-radius: var(--radius-sm); }
+.disclosure__chevron { transition: transform .15s; font-size: 0.8rem; width: 12px; }
+.disclosure.is-open .disclosure__chevron { transform: rotate(90deg); }
+.disclosure__title { flex: 1; font-weight: 600; }
+.disclosure__body { display: none; padding: 12px var(--gutter) 16px; }
+.disclosure.is-open .disclosure__body { display: block; }
+.disclosure__body .field-group { margin-bottom: 12px; }
+.disclosure__body .button-secondary { width: 100%; }
+.steps { margin: 0 0 12px; padding-left: 20px; color: var(--muted); font-size: 0.9rem; }
+.steps li + li { margin-top: 4px; }
+
+/* My products: one card per product, with Remove beside its heading */
+.product__heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.product__title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.product + .product .product__title { margin-top: 20px; }
+.text-button {
+  border: 0; background: none; padding: 8px 4px; margin: 0 0 -2px; font: inherit; font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.text-button--danger { color: var(--danger); }
+.products-add { width: 100%; margin-top: 12px; }
 
 /* Settings pop-up: full screen, over the nav, scrolls on its own */
 .settings-sheet {
