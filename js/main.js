@@ -1453,6 +1453,12 @@ function formatFluidRange(low, high) {
   return high < 1 ? `${roundTo(low * 1000, 50)}–${roundTo(high * 1000, 50)} ml` : `${low.toFixed(1)}–${high.toFixed(1)} L`;
 }
 const formatMg = mg => `${displayNumber(roundTo(mg, 50), 0)} mg`;
+// Litres to one decimal ("3.2 L", "0.6 L"), for totals and the loss working; or fl oz
+const formatLitres = litres => (settings.units.fluid === "imperial"
+  ? `${Math.round(litres * 1000 / ML_PER_FL_OZ)} fl oz` : `${litres.toFixed(1)} L`);
+// An hourly rate to the nearest 5 ml ("285 ml/h"), litres from 1 L/h; or fl oz
+const formatPerHour = litres => (settings.units.fluid === "imperial" ? `${Math.round(litres * 1000 / ML_PER_FL_OZ)} fl oz/h`
+  : litres < 1 ? `${roundTo(litres * 1000, 5)} ml/h` : `${litres.toFixed(1)} L/h`);
 const halves = n => `${Math.floor(n) || ""}${n % 1 ? "½" : ""}`; // 0.5 -> "½", 1.5 -> "1½"
 const CONTAINER_NAMES = { bottle: "bottle", handheld: "handheld", vest: "vest" };
 
@@ -1535,39 +1541,45 @@ function renderHydration(w) {
   const drinking = plan && !plan.toThirst && !swim;
 
   // Fluid: target, what you'll drink and where from, sweat, expected loss
+  const noFluidDetails = () => ["fluidTargetTotal", "fluidPerHourPlanned", "fluidTotalNote", "sweatBasis", "weightLossNote"].forEach(key => set(key, ""));
   if (swim) {
-    set("fluidPerHour", "None during"); set("fluidTotal", "–", false); set("fluidTotalNote", "");
-    set("sweatEstimate", "–", false); set("sweatBasis", "");
-    set("weightLoss", "–", false); set("weightLossNote", "");
+    set("fluidPerHour", "None during"); set("fluidTotal", "–", false);
+    set("sweatEstimate", "–", false); set("weightLoss", "–", false); noFluidDetails();
   } else if (!plan) {
     const why = !sweatBaseline() ? "Set how much you sweat in Settings" : "Add the duration on the Event page";
-    set("fluidPerHour", `– ${unitFor("volume").label}/h`, false); set("fluidTotal", `– ${unitFor("volume").label}`, false); set("fluidTotalNote", "");
-    set("sweatEstimate", why, false); set("sweatBasis", "");
-    set("weightLoss", "–", false); set("weightLossNote", "");
+    set("fluidPerHour", `– ${unitFor("volume").label}/h`, false); set("fluidTotal", `– ${unitFor("volume").label}`, false);
+    set("sweatEstimate", why, false); set("weightLoss", "–", false); noFluidDetails();
   } else {
+    // Target, with its total beneath; what you'll drink, with its hourly rate
     set("fluidPerHour", plan.toThirst ? "Drink to thirst" : formatFluid(plan.targetPerHour, true));
+    set("fluidTargetTotal", plan.toThirst ? "" : `${formatLitres(plan.targetLitres)} in all`);
     set("fluidTotal", plan.toThirst ? "–" : formatFluid(plan.plannedLitres), !plan.toThirst);
-    const where = [];
-    plan.legs.forEach(leg => {
+    set("fluidPerHourPlanned", plan.toThirst || !plan.plannedLitres ? "" : `About ${formatPerHour(plan.plannedPerHour)}`);
+    // Drinking from: what you carry and the aid stations used, per leg
+    const where = plan.legs.map(leg => {
       const prefix = plan.legs.length > 1 ? `${leg.sport === "bike" ? "Bike" : "Run"}: ` : "";
       const bits = [];
       if (leg.containersUsed) bits.push(leg.container.kind === "bottle"
         ? `${leg.containersUsed} × ${formatWithUnit("volume", leg.container.ml)} bottle${leg.containersUsed === 1 ? "" : "s"}`
         : `your ${formatWithUnit("volume", leg.container.ml)} ${CONTAINER_NAMES[leg.container.kind]}`);
-      if (leg.fromAid > 0) bits.push(`${Math.ceil(leg.fromAid * 1000 / AID_CUP_ML - 1e-9)} × ${formatWithUnit("volume", AID_CUP_ML)} at aid stations`);
-      if (leg.needsStations) bits.push("no aid stations added yet");
-      else if (!bits.length && !plan.toThirst) bits.push(leg.sport === "run" ? "nothing carried: set a handheld or vest on the Event page" : "add your bottles in Settings");
-      where.push(prefix + bits.join(" and "));
+      if (leg.fromAid > 0) {
+        const cups = Math.ceil(leg.fromAid * 1000 / AID_CUP_ML - 1e-9);
+        bits.push(`${leg.stations.length} aid station${leg.stations.length === 1 ? "" : "s"} (${cups} × ${formatWithUnit("volume", AID_CUP_ML)})`);
+      }
+      if (leg.needsStations) bits.push("aid stations: none added yet");
+      else if (!bits.length) bits.push(leg.sport === "run" ? "nothing carried: set a handheld or vest on the Event page" : "add your bottles in Settings");
+      return prefix + bits.join(" and ");
     });
-    const short = !plan.toThirst && plan.plannedLitres < plan.targetLitres - 0.05;
-    set("fluidTotalNote", plan.toThirst ? "" : (short ? `Of a ${formatFluid(plan.targetLitres)} target. ` : "") + where.join(" · ").replace(/^./, c => c.toUpperCase()));
+    set("fluidTotalNote", plan.toThirst ? "–" : where.join(" · ").replace(/^./, c => c.toUpperCase()), false);
     set("sweatEstimate", `${formatFluid(plan.sweatPerHour, true)}, ${formatFluid(plan.sweatLitres)} in all`);
     set("sweatBasis", `From your ${sweatBaseline().measured ? "measured rate" : "sweat level"}, adjusted for the conditions and effort`);
+    // The working beneath the loss; any warning goes in the red alert
+    set("weightLossNote", `${formatLitres(plan.sweatLitres)} sweat − ${formatLitres(plan.plannedLitres)} drunk`);
     if (plan.lossPercent == null) {
-      set("weightLoss", `${plan.lossKg.toFixed(1)} kg`); set("weightLossNote", "Add your weight in Settings for a percentage");
+      set("weightLoss", `${plan.lossKg.toFixed(1)} kg`);
+      set("weightLossNote", `${formatLitres(plan.sweatLitres)} sweat − ${formatLitres(plan.plannedLitres)} drunk. Add your weight in Settings for a percentage.`);
     } else {
       set("weightLoss", `${plan.lossPercent.toFixed(1)}% (${plan.lossKg.toFixed(1)} kg)`);
-      set("weightLossNote", `${plan.lossPercent > WEIGHT_LOSS_WARNING_PERCENT ? "Over" : "Under"} 3% of your body weight` + (short ? ", with what you can drink" : ""));
       if (plan.lossPercent > WEIGHT_LOSS_WARNING_PERCENT) {
         // How many more aid-station cups would bring the loss under 3% and under 2%
         const cupsFor = percent => Math.max(1, Math.ceil((plan.lossKg - fields.weight * percent / 100) * 1000 / AID_CUP_ML - 1e-9));
@@ -1615,7 +1627,13 @@ function renderHydration(w) {
     set("sodiumNote", plan.sodiumOptional ? "Optional for this length" : "");
     set("sodiumTotal", formatMg(plan.sodiumMg), !plan.sodiumOptional);
     const { sources, mix, perContainer, servings, limited, allowed, shortfall, carried } = sodiumSources(w, plan, carbFeeds(w));
-    set("sodiumSources", sources.length ? sources.map(s => `${productTitle(s.product)} ${formatMg(s.sodium)}`).join(" · ") : "–", sources.length > 0);
+    // Only sources that give sodium; if none do, say so (and whether the pre-load covers it)
+    const giving = sources.filter(s => s.sodium > 0);
+    if (giving.length) set("sodiumSources", giving.map(s => `${productTitle(s.product)} ${formatMg(s.sodium)}`).join(" · "));
+    else set("sodiumSources", "Nothing in this plan gives sodium during. "
+      + (preload.recommended && preload.sodium >= plan.sodiumMg
+        ? `This morning's pre-load (${displayNumber(preload.sodium, 0)} mg) already covers it.`
+        : "Try a course sports drink, electrolyte chews or salt capsules."), false);
     if (!carried) set("mix", "Not in this plan", false); // aid stations only: nothing to mix in
     else if (!mix) set("mix", "Add a drink mix or tabs in Settings", false);
     else if (!perContainer.length) set("mix", "Water: gels and the course cover it");

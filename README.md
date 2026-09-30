@@ -116,11 +116,15 @@ assets/icons/
       vest from the Event page, never bottles) plus a 150 ml cup at each aid
       station with water or course drink (`AID_CUP_ML`, an assumption). Races
       say where you drink from on the Event page (per leg for triathlon);
-      training uses what you carry. Aid stations only on the run with none
-      added: "No aid stations added yet" and a button that adds water stations
-      every 5 km (5, 10, 15, 20 km, within the run distance if set).
+      training uses what you carry. The fluid card shows the target per hour
+      (total beneath), what you'll drink (per hour beneath) and a plain
+      "Drinking from" row, e.g. "4 aid stations (4 × 150 ml)" or "2 × 750 ml
+      bottles". Aid stations only on the run with none added: "Aid stations:
+      none added yet" and a button that adds water stations every 5 km (5, 10,
+      15, 20 km, within the run distance if set).
     - Expected loss (sweat minus what you'll drink) in kg and as a % of body
-      weight. Over 3%, a warning says how many aid-station cups would bring it
+      weight, with the working beneath ("3.2 L sweat − 0.6 L drunk"). Over 3%,
+      the red alert says how many aid-station cups would bring it
       under 3% and under 2%. It sets "Rehydrate with": 1.25–1.5 L per kg over
       the next 4–6 hours, with an hourly figure (the top of the range over 6
       hours); meals count, and include some salt.
@@ -129,6 +133,10 @@ assets/icons/
       what you carry: whole or half tablets, at most 2 per bottle, never above
       the product's own strength, within its daily limit after the race-day
       pre-load (with the shortfall and a suggestion if the limit bites).
+      "Where it comes from" lists only sources that give sodium; if none do,
+      it says so, and whether the race-morning pre-load already covers it.
+      The fluid and sodium explanations sit in a "How this is worked out"
+      fold-out.
       "Optional for this length" under 2 h 30 below 25 °C. Aid stations only:
       tablets during are "Not in this plan". Nothing to drink at all: one line,
       "No sodium during… Pre-loading covers this event" (plus salt capsules or

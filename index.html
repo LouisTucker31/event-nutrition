@@ -139,21 +139,19 @@
     <h3 class="settings-subheading">Fluid</h3>
     <div class="field-group">
       <div class="field-row">
-        <div class="field computed-field computed-field--hero"><span id="fluidHourLabel">Target per hour</span><output data-result="fluidPerHour" aria-labelledby="fluidHourLabel">– <span data-unit-label="volume"></span>/h</output></div>
-        <div class="field computed-field computed-field--hero"><span id="fluidTotalLabel">You'll drink</span><output data-result="fluidTotal" aria-labelledby="fluidTotalLabel">– <span data-unit-label="volume"></span></output></div>
+        <div class="field computed-field computed-field--hero"><span id="fluidHourLabel">Target per hour</span><output data-result="fluidPerHour" aria-labelledby="fluidHourLabel">– <span data-unit-label="volume"></span>/h</output><span class="computed-field__detail" data-result="fluidTargetTotal"></span></div>
+        <div class="field computed-field computed-field--hero"><span id="fluidTotalLabel">You'll drink</span><output data-result="fluidTotal" aria-labelledby="fluidTotalLabel">– <span data-unit-label="volume"></span></output><span class="computed-field__detail" data-result="fluidPerHourPlanned"></span></div>
       </div>
-      <div class="field computed-field"><span id="fluidFromLabel">From</span><output data-result="fluidTotalNote" aria-labelledby="fluidFromLabel">–</output></div>
+      <div class="field computed-field"><span id="fluidFromLabel">Drinking from</span><output data-result="fluidTotalNote" aria-labelledby="fluidFromLabel">–</output></div>
       <div class="field computed-field"><span id="sweatEstimateLabel">You'll sweat about</span><output data-result="sweatEstimate" aria-labelledby="sweatEstimateLabel">–</output><span class="computed-field__detail" data-result="sweatBasis"></span></div>
       <div class="field computed-field"><span id="bottlesLabel">Bottles</span><output data-result="bottles" aria-labelledby="bottlesLabel">–</output><span class="computed-field__detail" data-result="bottleKit"></span></div>
       <div class="field computed-field"><span id="weightLossLabel">Expected weight loss</span><output data-result="weightLoss" aria-labelledby="weightLossLabel">–</output><span class="computed-field__detail" data-result="weightLossNote"></span></div>
     </div>
     <p class="plan-warning" data-result="fluidWarning" hidden></p>
-    <!-- Aid stations only on the run, none added yet -->
+    <!-- Aid stations only on the run, none added yet ("Drinking from" says so) -->
     <div class="plan-callout" data-add-stations hidden>
-      <p>No aid stations added yet.</p>
       <button type="button" class="button-secondary" id="addTypicalStations">Add typical stations (every 5 km)</button>
     </div>
-    <p class="settings-note">The target keeps your loss to about 2% of body weight, never over 0.8 L an hour on the run or 1 L on the bike, nor more than you sweat: drinking more risks low blood sodium. In sessions under an hour, drink to thirst. Aid stations count as a 150 ml cup each.</p>
 
     <!-- Triathlon: each leg's time window and its part in the plan (LEG_ROLES in main.js) -->
     <div data-leg-plan-wrap hidden>
@@ -171,7 +169,13 @@
       <div class="field computed-field"><span id="mixLabel">What to mix</span><output data-result="mix" aria-labelledby="mixLabel">–</output><span class="computed-field__detail" data-result="mixNote"></span></div>
       <div class="field computed-field"><span id="sodiumSourcesLabel">Where it comes from</span><output data-result="sodiumSources" aria-labelledby="sodiumSourcesLabel">–</output></div>
     </div>
-    <p class="settings-note">What you drink × how salty your sweat is (<span data-salt-band>not set</span>), not your whole sweat loss: you can't replace all of it. Gels, your mix and course drinks all count.</p>
+    <div class="disclosure" id="hydrationHow" data-fold>
+      <h4><button type="button" class="disclosure__toggle" aria-expanded="false" aria-controls="hydrationHowBody"><span class="disclosure__chevron" aria-hidden="true">▶</span><span class="disclosure__title">How this is worked out</span></button></h4>
+      <div class="disclosure__body" id="hydrationHowBody">
+        <p class="fold-text">The target keeps your loss to about 2% of body weight, never over 0.8 L an hour on the run or 1 L on the bike, nor more than you sweat: drinking more risks low blood sodium. In sessions under an hour, drink to thirst. Aid stations count as a 150 ml cup each.</p>
+        <p class="fold-text">Sodium is what you drink × how salty your sweat is (<span data-salt-band>not set</span>), not your whole sweat loss: you can't replace all of it. Gels, your mix and course drinks all count.</p>
+      </div>
+    </div>
 
     <h3 class="settings-subheading">From your products</h3>
     <div class="field-group" data-product-totals="drink tab"></div>
