@@ -39,7 +39,10 @@ html { scroll-padding-bottom: calc(var(--nav-clearance) + 12px); scrollbar-width
 html::-webkit-scrollbar { display: none; }
 /* Covers iOS overscroll so the page colour never shows white behind dark mode */
 body::before { content: ""; position: fixed; inset: 0; background: var(--bg); z-index: -1; }
-.page { background: var(--bg); min-height: 100vh; position: relative; }
+/* No background of its own: html, body and body::before paint it. A background
+   here left a hairline at its bottom edge on iPhone when the page's height
+   landed between pixels (seen on Hydration when bouncing past the end) */
+.page { min-height: 100vh; position: relative; }
 * { box-sizing: border-box; }
 body {
   margin: 0; color: var(--text);
