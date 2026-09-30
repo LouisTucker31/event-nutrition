@@ -9,7 +9,7 @@
 // cache names start with its own prefix, and "activate" only deletes caches
 // with that prefix (never another app's).
 const PREFIX = "race-nutrition-";
-const VERSION = "v26";
+const VERSION = "v27";
 const CACHE = PREFIX + VERSION;
 const NETWORK_TIMEOUT = 3000;
 const ASSETS = [

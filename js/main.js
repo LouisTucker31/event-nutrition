@@ -374,6 +374,7 @@ function productSummary(product) {
   if (product.carbs != null) parts.push(`${displayNumber(product.carbs, 1)} g carbs`);
   if (product.sodium != null) parts.push(`${displayNumber(product.sodium, 0)} mg sodium`);
   if (product.caffeine > 0) parts.push(`${displayNumber(product.caffeine, 0)} mg caffeine`);
+  if (product.maxPerDay > 0) parts.push(`max ${displayNumber(product.maxPerDay, 0)} a day`);
   if (product.carbType) parts.push(product.carbType === "dual" ? "glucose + fructose" : "glucose only");
   if (product.volume != null && ["drink", "tab"].includes(product.type)) parts.push(`in ${formatWithUnit("volume", product.volume)}`);
   return parts.join(" · ");
