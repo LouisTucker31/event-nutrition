@@ -133,18 +133,17 @@ assets/icons/
       pre-load (with the shortfall and a suggestion if the limit bites).
       "Where it comes from" lists only sources that give sodium; if none do,
       it says so, and whether the race-morning pre-load already covers it.
-      The fluid and sodium explanations sit in a "How this is worked out"
-      fold-out.
       "Optional for this length" under 2 h 30 below 25 °C. Aid stations only:
       tablets during are "Not in this plan". Nothing to drink at all: one line,
       "No sodium during… Pre-loading covers this event" (plus salt capsules or
       chews over 2 h 30 or 25 °C).
     - Pre-loading: 750 mg sodium in 500 ml, twice (the evening before, and 90
-      to 45 minutes before the start), shown as the sodium in whole servings
-      of your product (e.g. "668 mg (2 × Phizz) in 500 ml"). Recommended over
-      2 hours or 25 °C, or for salty sweaters; otherwise optional. The product
-      shows its doses and the daily count, e.g. "2 tablets evening before · 2
-      tablets race morning (2 of 4 today)".
+      to 45 minutes before the start), one line per dose in whole servings of
+      your product (e.g. "2 × Phizz in 500 ml", 668 mg sodium). Recommended
+      over 2 hours or 25 °C, or for salty sweaters; otherwise optional. The
+      product under "From your products" shows only what's used during (or
+      "Pre-loading only") and today's count against its daily limit, e.g.
+      "Pre-loading only (2 of 4 today)".
     - Swims: the fluid plan moves to before and after.
   - Triathlons show each leg's time window and its part in the plan: nothing on
     the swim, most carbs and fluid on the bike, gels and sips on the run

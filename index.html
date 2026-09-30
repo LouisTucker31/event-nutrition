@@ -133,7 +133,7 @@
         <div class="field computed-field computed-field--hero"><span id="fluidTotalLabel">You'll drink</span><output data-result="fluidTotal" aria-labelledby="fluidTotalLabel">– <span data-unit-label="volume"></span></output><span class="computed-field__detail" data-result="fluidPerHourPlanned"></span></div>
       </div>
       <div class="field computed-field"><span id="fluidFromLabel">Drinking from</span><output data-result="fluidTotalNote" aria-labelledby="fluidFromLabel">–</output></div>
-      <div class="field computed-field"><span id="sweatEstimateLabel">You'll sweat about</span><output data-result="sweatEstimate" aria-labelledby="sweatEstimateLabel">–</output><span class="computed-field__detail" data-result="sweatBasis"></span></div>
+      <div class="field computed-field"><span id="sweatEstimateLabel">You'll sweat about</span><output data-result="sweatEstimate" aria-labelledby="sweatEstimateLabel">–</output></div>
       <div class="field computed-field"><span id="bottlesLabel">Bottles</span><output data-result="bottles" aria-labelledby="bottlesLabel">–</output><span class="computed-field__detail" data-result="bottleKit"></span></div>
       <div class="field computed-field"><span id="weightLossLabel">Expected weight loss</span><output data-result="weightLoss" aria-labelledby="weightLossLabel">–</output><span class="computed-field__detail" data-result="weightLossNote"></span></div>
     </div>
@@ -159,13 +159,6 @@
       <div class="field computed-field"><span id="mixLabel">What to mix</span><output data-result="mix" aria-labelledby="mixLabel">–</output><span class="computed-field__detail" data-result="mixNote"></span></div>
       <div class="field computed-field"><span id="sodiumSourcesLabel">Where it comes from</span><output data-result="sodiumSources" aria-labelledby="sodiumSourcesLabel">–</output></div>
     </div>
-    <div class="disclosure" id="hydrationHow" data-fold>
-      <h4><button type="button" class="disclosure__toggle" aria-expanded="false" aria-controls="hydrationHowBody"><span class="disclosure__chevron" aria-hidden="true">▶</span><span class="disclosure__title">How this is worked out</span></button></h4>
-      <div class="disclosure__body" id="hydrationHowBody">
-        <p class="fold-text">The target keeps your loss to about 2% of body weight, never over 0.8 L an hour on the run or 1 L on the bike, nor more than you sweat: drinking more risks low blood sodium. In sessions under an hour, drink to thirst. Aid stations count as a 150 ml cup each.</p>
-        <p class="fold-text">Sodium is what you drink × how salty your sweat is (<span data-salt-band>not set</span>), not your whole sweat loss: you can't replace all of it. Gels, your mix and course drinks all count.</p>
-      </div>
-    </div>
 
     <h3 class="settings-subheading">From your products</h3>
     <div class="field-group" data-product-totals="drink tab"></div>
@@ -177,8 +170,9 @@
       <h3 class="settings-subheading">Pre-loading</h3>
       <div class="field-group">
         <div class="field computed-field"><span id="preloadStatusLabel">For this event</span><output data-result="preloadStatus" aria-labelledby="preloadStatusLabel">–</output></div>
-        <div class="field computed-field"><span id="preloadSodiumLabel">Each dose</span><output data-result="preloadSodium" aria-labelledby="preloadSodiumLabel">–</output></div>
-        <div class="field computed-field"><span id="preloadWhenLabel">When</span><output data-result="preloadWhen" aria-labelledby="preloadWhenLabel">–</output></div>
+        <!-- The two doses, one line each (the only place they're listed) -->
+        <div class="field computed-field"><span id="preloadEveningLabel">Evening before</span><output data-result="preloadEvening" aria-labelledby="preloadEveningLabel">–</output><span class="computed-field__detail" data-result="preloadEveningDetail"></span></div>
+        <div class="field computed-field"><span id="preloadMorningLabel" data-result="preloadMorningLabel">Race morning</span><output data-result="preloadMorning" aria-labelledby="preloadMorningLabel">–</output><span class="computed-field__detail" data-result="preloadMorningDetail"></span></div>
       </div>
       <p class="settings-note" data-result="preloadWhy"></p>
     </div>
@@ -188,8 +182,6 @@
       <div class="field computed-field computed-field--hero"><span id="rehydrateLabel">Rehydrate with</span><output data-result="rehydrate" aria-labelledby="rehydrateLabel">–</output><span class="computed-field__detail" data-result="rehydrateTiming"></span></div>
     </div>
     <p class="settings-note" data-result="rehydrateNote">About 1.25–1.5 L for every kg you lose. Meals count; include some salt.</p>
-
-    <p class="plan-disclaimer">These are starting points to test in training, not medical advice.</p>
   </section>
 
   <!-- Event: the training session or race to plan for. Fields show and hide with the

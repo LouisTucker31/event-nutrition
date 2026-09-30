@@ -175,7 +175,6 @@ input, textarea { caret-color: var(--accent); }   /* an accent-coloured text cur
 .plan-callout[hidden] { display: none; }
 .plan-callout .button-secondary { width: 100%; }
 .check-item__hint { display: block; font-size: 0.8rem; color: var(--muted-2); margin-top: 2px; }
-.plan-disclaimer { font-size: 0.8rem; color: var(--muted-2); margin: 24px 4px 0; text-align: center; }
 
 /* Race-only sections are wrapped, so their heading isn't the page's first */
 [data-event] > .settings-heading:first-of-type,
@@ -211,8 +210,6 @@ input[type=checkbox] { width: 18px; height: 18px; margin: 1px 0 0; flex-shrink: 
 .disclosure__body .field-group { margin-bottom: 12px; }
 .disclosure__body .button-secondary { width: 100%; }
 .disclosure__body .field-group:last-child { margin-bottom: 0; }
-.fold-text { margin: 0; font-size: 0.85rem; color: var(--muted); }
-.fold-text + .fold-text { margin-top: 8px; }
 /* A fold-out shown openly, without its header (carb loading when recommended) */
 .disclosure.is-plain { border: 0; border-radius: 0; margin-top: 8px; overflow: visible; }
 .disclosure.is-plain > h4 { display: none; }

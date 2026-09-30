@@ -287,7 +287,7 @@ heightInputs.cm.addEventListener("input", () => {
 // Sweat test: sweat rate = (weight before - weight after + fluid drunk) / hours,
 // taking 1 kg of weight lost as 1 litre of sweat
 // Fold-outs with a fixed body (data-fold): the sweat test, and on the Nutrition
-// page the carb-loading numbers (and on Hydration, how it is worked out)
+// page the carb-loading numbers
 document.querySelectorAll("[data-fold]").forEach(fold => {
   const toggle = fold.querySelector(".disclosure__toggle");
   toggle.addEventListener("click", () => toggle.setAttribute("aria-expanded", String(fold.classList.toggle("is-open"))));
@@ -1527,7 +1527,7 @@ function renderHydration(w) {
   const drinking = plan && !plan.toThirst && !swim;
 
   // Fluid: target, what you'll drink and where from, sweat, expected loss
-  const noFluidDetails = () => ["fluidTargetTotal", "fluidPerHourPlanned", "fluidTotalNote", "sweatBasis", "weightLossNote"].forEach(key => set(key, ""));
+  const noFluidDetails = () => ["fluidTargetTotal", "fluidPerHourPlanned", "fluidTotalNote", "weightLossNote"].forEach(key => set(key, ""));
   if (swim) {
     set("fluidPerHour", "None during"); set("fluidTotal", "–", false);
     set("sweatEstimate", "–", false); set("weightLoss", "–", false); noFluidDetails();
@@ -1558,7 +1558,6 @@ function renderHydration(w) {
     });
     set("fluidTotalNote", plan.toThirst ? "–" : where.join(" · ").replace(/^./, c => c.toUpperCase()), false);
     set("sweatEstimate", `${formatFluid(plan.sweatPerHour, true)}, ${formatFluid(plan.sweatLitres)} in all`);
-    set("sweatBasis", `From your ${sweatBaseline().measured ? "measured rate" : "sweat level"}, adjusted for the conditions and effort`);
     // The working beneath the loss; any warning goes in the red alert
     set("weightLossNote", `${formatLitres(plan.sweatLitres)} sweat − ${formatLitres(plan.plannedLitres)} drunk`);
     if (plan.lossPercent == null) {
@@ -1641,30 +1640,34 @@ function renderHydration(w) {
     duringServings = sources.find(s => s.mix && s.product === preload.product)?.servings || 0;
   }
   document.querySelector('#view-hydration [data-result="mix"]').closest(".field").hidden = !mixed;
-  // The pre-loading product: the evening dose, the race-morning dose and any
-  // during, against its daily limit (the evening dose is the day before)
+  // The pre-loading product: the doses are listed under Pre-loading, so here
+  // just what's used during (or "Pre-loading only") and today's count against
+  // its daily limit (the race-morning dose and any during; the evening dose is
+  // the day before)
   if (preload.product) {
-    const unit = n => (preload.product.type === "tab" ? `tablet${n === 1 ? "" : "s"}` : `serving${n === 1 ? "" : "s"}`);
-    const n = preload.servings;
-    const today = n + duringServings;
-    const text = `${n} ${unit(n)} evening before · ${n} ${unit(n)} ${settings.workoutMode === "race" ? "race morning" : "before the start"}`
-      + (duringServings ? ` · ${halves(duringServings)} during` : "")
+    const today = preload.servings + duringServings;
+    const text = (duringServings ? `${halves(duringServings)} during` : "Pre-loading only")
       + (preload.product.maxPerDay ? ` (${halves(today)} of ${preload.product.maxPerDay} today)` : "");
     document.querySelectorAll(`#view-hydration [data-result="servings-${preload.product.id}"]`).forEach(el => {
-      el.textContent = preload.recommended ? text : `Optional: ${text}`;
+      el.textContent = text;
       el.classList.add("is-set");
     });
   }
 
   // Pre-loading: 750 mg in 500 ml, the evening before and 90–45 minutes before
-  // the start, shown as the sodium in whole servings of your product
+  // the start, as whole servings of your product, one line per dose
   set("preloadStatus", preload.recommended ? "Recommended" : "Optional", preload.recommended);
-  set("preloadSodium", preload.product
-    ? `${displayNumber(preload.sodium, 0)} mg (${preload.servings} × ${productTitle(preload.product)}) in ${formatWithUnit("volume", PRELOAD.fluidMl)}`
-    : `${formatMg(PRELOAD.sodiumMg)} in ${formatWithUnit("volume", PRELOAD.fluidMl)}: add a tab or drink mix in Settings`);
-  set("preloadWhen", w.start
-    ? `Evening before, and ${timeOfDayMinus(w.start, PRELOAD.startMinutesBefore / 60)}–${timeOfDayMinus(w.start, PRELOAD.finishMinutesBefore / 60)}`
-    : "Evening before, and 90–45 min before the start", !!w.start);
+  const dose = preload.product
+    ? `${preload.servings} × ${productTitle(preload.product)} in ${formatWithUnit("volume", PRELOAD.fluidMl)}`
+    : `${formatMg(PRELOAD.sodiumMg)} of sodium in ${formatWithUnit("volume", PRELOAD.fluidMl)}`;
+  const doseSodium = preload.product ? `${displayNumber(preload.sodium, 0)} mg sodium` : "Add a tab or drink mix in Settings";
+  set("preloadEvening", dose, !!preload.product);
+  set("preloadEveningDetail", doseSodium);
+  set("preloadMorningLabel", settings.workoutMode === "race" ? "Race morning" : "Before the start");
+  set("preloadMorning", dose, !!preload.product);
+  set("preloadMorningDetail", (w.start
+    ? `${timeOfDayMinus(w.start, PRELOAD.startMinutesBefore / 60)}–${timeOfDayMinus(w.start, PRELOAD.finishMinutesBefore / 60)}`
+    : "90–45 min before the start") + ` · ${doseSodium}`);
   set("preloadWhy", preload.recommended
     ? `Recommended because ${preload.reasons.join(" and ")}. The race-day dose counts towards the product's daily limit.`
     : "Optional: it's recommended for events over 2 hours or 25 °C, or salty sweaters.");
@@ -1703,7 +1706,7 @@ document.getElementById("addTypicalStations").addEventListener("click", () => {
 // Nutrition and Hydration pages: they only display what's worked out from
 // Settings and the Event page's selected workout (training or race): which
 // event it's for (the line under the title), the Nutrition and Hydration maths
-// (renderNutrition, renderHydration), the saltiness band and your products.
+// (renderNutrition, renderHydration), and your products.
 const WORKOUT_TYPE_NAMES = { run: "Run", bike: "Bike", swim: "Swim", triathlon: "Triathlon", other: "Other" };
 function renderPlans() {
   const w = workout();
@@ -1744,9 +1747,6 @@ function renderPlans() {
       group.append(row);
     });
   });
-
-  const { band, isSet } = currentSaltBand();
-  document.querySelector("[data-salt-band]").textContent = isSet ? `yours is ${band.name.toLowerCase()}` : "set it in Settings";
 
   // One line per product that could be used, with how many servings (to come)
   document.querySelectorAll("[data-product-totals]").forEach(group => {
