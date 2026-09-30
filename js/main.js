@@ -1603,6 +1603,8 @@ function renderHydration(w) {
     ? `${l.containersUsed} × ${formatWithUnit("volume", l.container.ml)}`
     : `${formatWithUnit("volume", l.container.ml)} ${CONTAINER_NAMES[l.container.kind]} on the run`).join(" · "));
   set("bottleKit", !drinking || carriers.length ? "" : plan.legs.every(l => l.from === "aid") ? "Aid stations only" : "", false);
+  // No bottles used: hide the row, "Drinking from" covers it
+  document.querySelector('#view-hydration [data-result="bottles"]').closest(".field").hidden = drinking && !carriers.length;
   // Aid stations only on the run, with none added: offer typical ones
   document.querySelector("[data-add-stations]").hidden = !(drinking && plan.legs.some(l => l.needsStations && l.sport === "run"));
 
@@ -1618,6 +1620,7 @@ function renderHydration(w) {
       + (longOrHot ? " Consider salt capsules or electrolyte chews." : ""));
   }
   let duringServings = 0;
+  let mixed = true; // false when nothing goes in a bottle: the row hides, "Where it comes from" covers it
   if (!drinking || plan.sodiumMg === 0) {
     set("sodiumPerHour", swim ? "None during" : plan?.toThirst ? "Not needed" : "– mg/h", false);
     set("sodiumNote", ""); set("sodiumTotal", "–", false);
@@ -1634,6 +1637,7 @@ function renderHydration(w) {
       + (preload.recommended && preload.sodium >= plan.sodiumMg
         ? `This morning's pre-load (${displayNumber(preload.sodium, 0)} mg) already covers it.`
         : "Try a course sports drink, electrolyte chews or salt capsules."), false);
+    mixed = perContainer.length > 0;
     if (!carried) set("mix", "Not in this plan", false); // aid stations only: nothing to mix in
     else if (!mix) set("mix", "Add a drink mix or tabs in Settings", false);
     else if (!perContainer.length) set("mix", "Water: gels and the course cover it");
@@ -1650,6 +1654,7 @@ function renderHydration(w) {
     }));
     duringServings = sources.find(s => s.mix && s.product === preload.product)?.servings || 0;
   }
+  document.querySelector('#view-hydration [data-result="mix"]').closest(".field").hidden = !mixed;
   // The pre-loading product: the evening dose, the race-morning dose and any
   // during, against its daily limit (the evening dose is the day before)
   if (preload.product) {
