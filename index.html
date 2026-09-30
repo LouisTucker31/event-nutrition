@@ -48,18 +48,11 @@
       <!-- The guidance for this length of session beside your gut-training cap, so the gap shows -->
       <div class="field computed-field"><span id="carbGuidanceLabel">For this length of session</span><output data-result="carbGuidance" aria-labelledby="carbGuidanceLabel">–</output><span class="computed-field__detail" data-result="carbGap"></span></div>
     </div>
-    <div class="disclosure" id="guidanceHow" data-fold>
-      <h4><button type="button" class="disclosure__toggle" aria-expanded="false" aria-controls="guidanceHowBody"><span class="disclosure__chevron" aria-hidden="true">▶</span><span class="disclosure__title">How this is worked out</span></button></h4>
-      <div class="disclosure__body" id="guidanceHowBody">
-        <p class="fold-text">Guidance goes by how long you're out: none needed under 45 minutes, up to 30 g/h to 75 minutes, 30–60 g/h to 2 h 30, and 60–90 g/h beyond. If your carb products are all glucose only, it stops at 60 g/h, and over 4 hours 90 g/h needs a glucose + fructose product.</p>
-      </div>
-    </div>
 
     <h3 class="settings-subheading">Timeline</h3>
     <div class="field-group">
       <ol class="timeline" data-result="carbTimeline" aria-label="When to take what"></ol>
     </div>
-    <p class="settings-note" data-result="timelineNote">Times from the start; −0:15 is 15 minutes before.</p>
 
     <h3 class="settings-subheading">From your products</h3>
     <div class="field-group" data-product-totals="gel chew bar drink other"></div>
@@ -98,9 +91,8 @@
         <div class="field computed-field"><span id="mealCarbsLabel">Carbs</span><output data-result="mealCarbs" aria-labelledby="mealCarbsLabel">– g</output></div>
       </div>
       <!-- An example meal near the low end, from MEAL_FOODS in main.js -->
-      <div class="field computed-field"><span id="mealExampleLabel">For example</span><output data-result="mealExample" aria-labelledby="mealExampleLabel">–</output><span class="computed-field__detail" data-result="mealFoods"></span></div>
+      <div class="field computed-field"><span id="mealExampleLabel">For example</span><output data-result="mealExample" aria-labelledby="mealExampleLabel">–</output></div>
     </div>
-    <p class="settings-note" data-result="mealNote">1 g/kg for each hour before the start, 1–4 hours out.</p>
     <p class="settings-note">Mostly carbs, low fat and fibre. Eggs and similar are fine alongside, but count the carbs, not the plate.</p>
 
     <!-- Only when a product has caffeine set -->
@@ -125,8 +117,6 @@
       <div class="field computed-field"><span id="recoveryWhenLabel">When</span><output data-result="recoveryWhen" aria-labelledby="recoveryWhenLabel">–</output></div>
     </div>
     <p class="settings-note" data-result="recoveryNote">1.0–1.2 g/kg of carbs an hour for the first few hours, and about 0.3 g/kg of protein.</p>
-
-    <p class="plan-disclaimer">These are starting points to test in training, not medical advice.</p>
   </section>
 
   <section class="view view--has-button" id="view-hydration" hidden>

@@ -287,7 +287,7 @@ heightInputs.cm.addEventListener("input", () => {
 // Sweat test: sweat rate = (weight before - weight after + fluid drunk) / hours,
 // taking 1 kg of weight lost as 1 litre of sweat
 // Fold-outs with a fixed body (data-fold): the sweat test, and on the Nutrition
-// page how the guidance is worked out and the carb-loading numbers
+// page the carb-loading numbers (and on Hydration, how it is worked out)
 document.querySelectorAll("[data-fold]").forEach(fold => {
   const toggle = fold.querySelector(".disclosure__toggle");
   toggle.addEventListener("click", () => toggle.setAttribute("aria-expanded", String(fold.classList.toggle("is-open"))));
@@ -1018,7 +1018,7 @@ const MEAL_FOODS = [
 ];
 const CAFFEINE = { perKg: [1, 3], minutesBefore: 60 };
 const RECOVERY = { carbsPerKgPerHour: [1.0, 1.2], nextMealPerKg: 1, proteinPerKg: 0.3, withinMinutes: 30 };
-const FEEDS = { preStartMinutes: 15, stepMinutes: 5, stopBeforeFinishMinutes: 30, lastStretchNoteMinutes: 45,
+const FEEDS = { preStartMinutes: 15, stepMinutes: 5, stopBeforeFinishMinutes: 30,
   fallbackGel: { name: "gel", carbs: 22 } };
 
 // An example pre-race meal close to a carb target, from the breakfast foods in
@@ -1169,7 +1169,7 @@ function renderNutrition(w) {
   }
 
   // Timeline: gel feeds with a running total, and (for triathlon) each leg with its part
-  const { gel, feeds, count, grams, limited, max } = carbFeeds(w, plan);
+  const { gel, feeds, count, grams } = carbFeeds(w, plan);
   const rows = feeds.map(({ time, soFar }) => ({ time, what: `1 × ${gel.name}`, detail: `${soFar} g so far` }));
   legWindows(w).forEach(({ leg, name, start }) => rows.push({ time: start, what: name, detail: LEG_ROLES[leg].nutrition, kind: "leg" }));
   rows.sort((a, b) => a.time - b.time || (a.kind === "leg" ? -1 : 1)); // a leg heads any feed at its start
@@ -1189,16 +1189,6 @@ function renderNutrition(w) {
     timeline.append(item);
   });
   timeline.closest(".field-group").hidden = rows.length === 0;
-  // When the last feed is well before the finish, say why there's none after it
-  const finish = legWindows(w).at(-1)?.end ?? plan?.seconds;
-  const lastFeed = feeds.at(-1)?.time;
-  const lastStretch = plan && w.type !== "swim" && lastFeed != null && finish - lastFeed >= FEEDS.lastStretchNoteMinutes * 60;
-  setResult("timelineNote", !plan ? "Add the duration on the Event page to see when to take what."
-    : rows.length === 0 ? "No gels needed for this one."
-    : "Times from the start; −0:15 is 15 minutes before." // the product total is under From your products
-      + (lastStretch ? " No gel needed in the last stretch; it won't be absorbed in time." : "")
-      + (limited ? ` Limited to ${max} a day, the label's maximum.` : "")
-      + (gel.product ? "" : " Add your gels in Settings to use them here."));
 
   // Totals: the planned amount (whole gels, plus any drink mix), with the target beneath
   const drinkMix = plan && w.type !== "swim" ? drinkMixCarbsPerHour(w).source : null;
@@ -1269,14 +1259,9 @@ function renderNutrition(w) {
   setResult("mealTime", w.start ? timeOfDayMinus(w.start, hours) : `${hoursText} h before`, !!w.start);
   const meal = perKg([PRE_MEAL.perKgLow, Math.min(PRE_MEAL.maxPerKg, hours * PRE_MEAL.perKgPerHour)]);
   setResult("mealCarbs", meal ? formatRange(meal, "g") : "– g", !!meal);
-  const perKgRange = [PRE_MEAL.perKgLow, Math.min(PRE_MEAL.maxPerKg, hours * PRE_MEAL.perKgPerHour)].map(v => displayNumber(v, 1));
-  setResult("mealNote", `${hoursText} hour${hours === 1 ? "" : "s"} before the start (set in Settings): ${formatRange(perKgRange, "g/kg")}, 1 g/kg for each hour before.`
-    + (weight != null && w.type === "run" ? ` Runs: go for the lower end, about ${roundTo(PRE_MEAL.perKgLow * weight, 10)} g.` : "")
-    + (w.start ? "" : " Add a start time on the Event page for a clock time."));
-  // An example meal near the low end, and the carbs in some foods
+  // An example meal near the low end
   const example = meal ? exampleMeal(meal[0]) : null;
   setResult("mealExample", example ? `${example.text[0].toUpperCase()}${example.text.slice(1)}: about ${roundTo(example.carbs, 5)} g` : "–", false);
-  setResult("mealFoods", `Carbs, roughly: ${MEAL_FOODS.map(f => `${f.name} ${f.carbs} g`).join(" · ")}`);
 
   // Caffeine (optional): 1–3 mg/kg about an hour before the start, from a
   // product with caffeine, only if you've tried it in training

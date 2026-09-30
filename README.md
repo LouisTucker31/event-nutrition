@@ -78,9 +78,7 @@ assets/icons/
       Example: a 2:06:36 run at a 30 g/h cap with a 22 g gel gives −0:15,
       0:30 and 1:15, 3 gels, 66 g.
     - Total carbs shows what's planned (e.g. "66 g"), with "Target 65 g · 3
-      gels" beneath. How the guidance is worked out sits in a fold-out under
-      it. Feeds keep out of the last 30 minutes; when the last is 45+ minutes
-      before the finish, a note says why.
+      gels" beneath. Feeds keep out of the last 30 minutes.
     - "From your products" shows servings from the timeline (e.g. "3
       servings, 66 g"); anything unused says "Not in this plan".
     - Carb loading, per day with kcal: 7–8 g/kg the day before (90 min–2 h 30,
@@ -93,10 +91,10 @@ assets/icons/
       accent; when recommended they show openly with it. A note asks for normal
       daily carbs until they're set.
     - Pre-race meal: 1 g/kg up to 1 g/kg for each hour before (at most 4
-      g/kg), eaten the hours before set in Settings (default 2); runs go for
-      the lower end. E.g. 103 kg, 2 h before a 09:30 start: eat by 07:30,
-      105–205 g. An example meal near the low end is built from bagels, jam,
-      banana and honey, with a list of foods' approximate carbs (`MEAL_FOODS`).
+      g/kg), eaten the hours before set in Settings (default 2). E.g. 103 kg,
+      2 h before a 09:30 start: eat by 07:30, 105–205 g. An example meal near
+      the low end is built from bagels, jam, banana and honey (`MEAL_FOODS`,
+      approximate carbs).
     - Caffeine (optional, only when a product has caffeine): 1–3 mg/kg about
       60 minutes before the start, in mg and servings of that product.
     - Recovery: when training again within 8 hours, "Carbs per hour" of
