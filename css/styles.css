@@ -211,6 +211,12 @@ input[type=checkbox] { width: 18px; height: 18px; margin: 1px 0 0; flex-shrink: 
 .disclosure.is-open .disclosure__body { display: block; }
 .disclosure__body .field-group { margin-bottom: 12px; }
 .disclosure__body .button-secondary { width: 100%; }
+.disclosure__body .field-group:last-child { margin-bottom: 0; }
+.fold-text { margin: 0; font-size: 0.85rem; color: var(--muted); }
+/* A fold-out shown openly, without its header (carb loading when recommended) */
+.disclosure.is-plain { border: 0; border-radius: 0; margin-top: 8px; overflow: visible; }
+.disclosure.is-plain > h4 { display: none; }
+.disclosure.is-plain .disclosure__body { display: block; padding: 0; }
 .steps { margin: 0 0 12px; padding-left: 20px; color: var(--muted); font-size: 0.9rem; }
 .steps li + li { margin-top: 4px; }
 

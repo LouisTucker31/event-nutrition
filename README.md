@@ -77,9 +77,10 @@ assets/icons/
       row has a running total; the product's daily limit is respected.
       Example: a 2:06:36 run at a 30 g/h cap with a 22 g gel gives −0:15,
       0:30 and 1:15, 3 gels, 66 g.
-    - Total carbs shows the target beside what's planned, e.g. "65 g target ·
-      66 g planned (3 gels)". Feeds keep out of the last 30 minutes; when the
-      last is 45+ minutes before the finish, a note says why.
+    - Total carbs shows what's planned (e.g. "66 g"), with "Target 65 g · 3
+      gels" beneath. How the guidance is worked out sits in a fold-out under
+      it. Feeds keep out of the last 30 minutes; when the last is 45+ minutes
+      before the finish, a note says why.
     - "From your products" shows servings from the timeline (e.g. "3
       servings, 66 g"); anything unused says "Not in this plan".
     - Carb loading, per day with kcal: 7–8 g/kg the day before (90 min–2 h 30,
@@ -87,7 +88,10 @@ assets/icons/
       for 36 hours (2 h 30–4 h), 10–12 g/kg a day for 36–48 hours (over 4 h).
       With normal daily carbs set, the main line is the increase ("About
       +295–400 g on top of a normal day"), with the total beneath. Split into
-      3 meals and 2 snacks, keeping fibre and fat lower.
+      3 meals and 2 snacks, keeping fibre and fat lower. When loading is
+      optional the numbers fold away under "Show the numbers", without the
+      accent; when recommended they show openly with it. A note asks for normal
+      daily carbs until they're set.
     - Pre-race meal: 1 g/kg up to 1 g/kg for each hour before (at most 4
       g/kg), eaten the hours before set in Settings (default 2); runs go for
       the lower end. E.g. 103 kg, 2 h before a 09:30 start: eat by 07:30,
@@ -95,8 +99,9 @@ assets/icons/
       banana and honey, with a list of foods' approximate carbs (`MEAL_FOODS`).
     - Caffeine (optional, only when a product has caffeine): 1–3 mg/kg about
       60 minutes before the start, in mg and servings of that product.
-    - Recovery: 1.0–1.2 g/kg of carbs an hour and about 0.3 g/kg of protein,
-      stressed ("within 30 min") only when training again within 8 hours.
+    - Recovery: when training again within 8 hours, "Carbs per hour" of
+      1.0–1.2 g/kg, starting within 30 min; otherwise "Carbs at your next meal"
+      of about 1 g/kg. About 0.3 g/kg of protein either way.
   - *Hydration* (worked out, see the constants above `renderHydration` in
     `js/main.js`):
     - Sweat rate for the event: your measured rate or sweat level, scaled for

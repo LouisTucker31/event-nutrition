@@ -48,7 +48,12 @@
       <!-- The guidance for this length of session beside your gut-training cap, so the gap shows -->
       <div class="field computed-field"><span id="carbGuidanceLabel">For this length of session</span><output data-result="carbGuidance" aria-labelledby="carbGuidanceLabel">–</output><span class="computed-field__detail" data-result="carbGap"></span></div>
     </div>
-    <p class="settings-note">Guidance goes by how long you're out: none needed under 45 minutes, up to 30 g/h to 75 minutes, 30–60 g/h to 2 h 30, and 60–90 g/h beyond. If your carb products are all glucose only, it stops at 60 g/h, and over 4 hours 90 g/h needs a glucose + fructose product.</p>
+    <div class="disclosure" id="guidanceHow" data-fold>
+      <h4><button type="button" class="disclosure__toggle" aria-expanded="false" aria-controls="guidanceHowBody"><span class="disclosure__chevron" aria-hidden="true">▶</span><span class="disclosure__title">How this is worked out</span></button></h4>
+      <div class="disclosure__body" id="guidanceHowBody">
+        <p class="fold-text">Guidance goes by how long you're out: none needed under 45 minutes, up to 30 g/h to 75 minutes, 30–60 g/h to 2 h 30, and 60–90 g/h beyond. If your carb products are all glucose only, it stops at 60 g/h, and over 4 hours 90 g/h needs a glucose + fructose product.</p>
+      </div>
+    </div>
 
     <h3 class="settings-subheading">Timeline</h3>
     <div class="field-group">
@@ -67,15 +72,24 @@
       <h3 class="settings-subheading">Carb loading</h3>
       <div class="field-group">
         <div class="field computed-field"><span id="loadStatusLabel">For this length</span><output data-result="loadStatus" aria-labelledby="loadStatusLabel">–</output></div>
-        <div class="field-row">
-          <!-- With normal daily carbs set (Settings), the main line is the increase and the total goes beneath -->
-          <div class="field computed-field computed-field--hero"><span id="loadPerDayLabel" data-result="loadPerDayLabel">Carbs a day</span><output data-result="loadPerDay" aria-labelledby="loadPerDayLabel">– g</output><span class="computed-field__detail" data-result="loadKcal"></span></div>
-          <div class="field computed-field"><span id="loadPerKgLabel">Per kg a day</span><output data-result="loadPerKg" aria-labelledby="loadPerKgLabel">–</output></div>
-        </div>
-        <div class="field computed-field"><span id="loadWhenLabel">When</span><output data-result="loadWhen" aria-labelledby="loadWhenLabel">–</output></div>
-        <div class="field computed-field"><span id="loadSplitLabel">Through the day</span><output data-result="loadSplit" aria-labelledby="loadSplitLabel">–</output><span class="computed-field__detail">Keep fibre and fat lower.</span></div>
       </div>
-      <p class="settings-note" data-result="loadNote">Aim for a clear increase on your normal intake; mostly white carbs and drinks, less fibre.</p>
+      <!-- The numbers: folded away when loading is optional (under 2 h 30), shown
+           openly (is-plain) with the accent when it's recommended -->
+      <div class="disclosure" id="loadNumbers" data-fold>
+        <h4><button type="button" class="disclosure__toggle" aria-expanded="false" aria-controls="loadNumbersBody"><span class="disclosure__chevron" aria-hidden="true">▶</span><span class="disclosure__title">Show the numbers</span></button></h4>
+        <div class="disclosure__body" id="loadNumbersBody">
+          <div class="field-group">
+            <div class="field-row">
+              <!-- With normal daily carbs set (Settings), the main line is the increase and the total goes beneath -->
+              <div class="field computed-field" data-load-hero><span id="loadPerDayLabel" data-result="loadPerDayLabel">Carbs a day</span><output data-result="loadPerDay" aria-labelledby="loadPerDayLabel">– g</output><span class="computed-field__detail" data-result="loadKcal"></span></div>
+              <div class="field computed-field"><span id="loadPerKgLabel">Per kg a day</span><output data-result="loadPerKg" aria-labelledby="loadPerKgLabel">–</output></div>
+            </div>
+            <div class="field computed-field"><span id="loadWhenLabel">When</span><output data-result="loadWhen" aria-labelledby="loadWhenLabel">–</output></div>
+            <div class="field computed-field"><span id="loadSplitLabel">Through the day</span><output data-result="loadSplit" aria-labelledby="loadSplitLabel">–</output><span class="computed-field__detail">Keep fibre and fat lower.</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="settings-note" data-result="loadNote">Add your normal daily carbs in Settings to see the increase</p>
     </div>
     <h3 class="settings-subheading" data-result="mealHeading">Pre-race meal</h3>
     <div class="field-group">
@@ -105,7 +119,7 @@
     <h2 class="settings-heading">After</h2>
     <div class="field-group">
       <div class="field-row">
-        <div class="field computed-field"><span id="recoveryCarbsLabel">Carbs per hour</span><output data-result="recoveryCarbs" aria-labelledby="recoveryCarbsLabel">– g</output></div>
+        <div class="field computed-field"><span id="recoveryCarbsLabel" data-result="recoveryCarbsLabel">Carbs per hour</span><output data-result="recoveryCarbs" aria-labelledby="recoveryCarbsLabel">– g</output></div>
         <div class="field computed-field"><span id="recoveryProteinLabel">Protein</span><output data-result="recoveryProtein" aria-labelledby="recoveryProteinLabel">– g</output></div>
       </div>
       <div class="field computed-field"><span id="recoveryWhenLabel">When</span><output data-result="recoveryWhen" aria-labelledby="recoveryWhenLabel">–</output></div>
@@ -558,7 +572,7 @@
       </div>
       <p class="settings-note">Less, average and more are for about 18 °C at a steady effort. A measured rate is used instead, adjusted from the conditions it was measured in, so a winter run isn't used as it is for a hot race.</p>
 
-      <div class="disclosure" id="sweatTest">
+      <div class="disclosure" id="sweatTest" data-fold>
         <h4><button type="button" class="disclosure__toggle" aria-expanded="false" aria-controls="sweatTestBody"><span class="disclosure__chevron" aria-hidden="true">▶</span><span class="disclosure__title">How to measure your sweat rate</span></button></h4>
         <div class="disclosure__body" id="sweatTestBody">
           <ol class="steps">
